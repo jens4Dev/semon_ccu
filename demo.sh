@@ -80,25 +80,39 @@ function GetStringRegister() {
     return $ret
 }
 
-# Print Common Block
-#tclsh /usr/local/addons/modbus/modbus_interface.tcl 192.168.30.45 502 1 03 40000 4
-#21365 28243 1 65
-#1.+2. Byte = 0x53756e53
-#3. Byte = 1
-#4. Byte = 65 = Länge einesBlocks in 16-bit Registern
+function GetScaleFactor() {
+    local register=$1
+    
+    local val=$(GetModBusValue $register 1)
+    # echo $val
+    val=${val#-}
 
+    if [ $val -eq 0 ]; then
+        echo 1
+    elif [ $val -eq 1 ]; then
+        echo 10
+    elif [ $val -eq 2 ]; then
+        echo 100
+    elif [ $val -eq 3 ]; then
+        echo 1000
+    fi
+    return $?
+}
 
-
-# SunSpec Mapping IDs
-invMapID=$(GetUInt16Register $(($invCommonBlock + 69)))
-echo "Hier $invMapID" $?
+function GetScaledUin32FloatValue() {
+    local register=$1
+    local length=$2
+    local scale=$3
+    
+    m=34; awk -v m=$m 'BEGIN { print 1 - ((m - 20) / 34) }'
+}
 
 # String SunS = 0x53756e53 = 1400204883
 invSunSValue=$(GetUInt32Register $(($invCommonBlock + 0)))
-echo "Hier $invSunSValue" $?
+echo "Hier $invSunSValue"
 
 invSunSstring=$(GetStringRegister $(($invCommonBlock + 0)) 2)
-echo "Hier $invSunSstring" $?
+echo "Hier $invSunSstring"
 
 # C_Hersteller
 invVendor=$(GetStringRegister $(($invCommonBlock + 4)) 16)
@@ -115,3 +129,33 @@ echo "Hier $invVersion"
 # C_Serial
 invSerialNo=$(GetStringRegister $(($invCommonBlock + 52)) 16)
 echo "Hier $invSerialNo"
+
+# SunSpec Mapping IDs
+invMapID=$(GetUInt16Register $(($invCommonBlock + 69)))
+echo "Hier $invMapID"
+
+# Scale
+GetScaleFactor $(($invModelBlockStart + 15))
+
+meterSunSstring=$(GetStringRegister $(($meterCommonBlock + 0)) 2)
+echo "Hier $meterSunSstring"
+
+# C_Hersteller
+meterVendor=$(GetStringRegister $(($meterCommonBlock + 4)) 16)
+echo "Hier $meterVendor"
+
+# C_Modell
+meterModell=$(GetStringRegister $(($meterCommonBlock + 20)) 16)
+echo "Hier $meterModell"
+
+# C_Version
+meterVersion=$(GetStringRegister $(($meterCommonBlock + 44)) 8)
+echo "Hier $meterVersion"
+
+# C_Serial
+meterSerialNo=$(GetStringRegister $(($meterCommonBlock + 52)) 16)
+echo "Hier $meterSerialNo"
+
+# SunSpec Mapping IDs
+meterMapID=$(GetUInt16Register $(($meterCommonBlock + 69)))
+echo "Hier $meterMapID"

@@ -1,10 +1,11 @@
 ## eq3 / HomeMatic CCU based data logging for SolarEdge Inverters with Modbus Meter
-This software was developed for our private PV device using a SolarEdge SE5K inverter in combination a with Modbus Meter SE-WNC-3Y-400-MB. The meter is connected to the inverter via a separate RS485. 
-The inverter is connected to the LAN and with the ModBus TCP protocol you read lost of parameters from both the inverter as well as the meter. 
+This software was developed for our private PV device using a SolarEdge SE5K inverter in combination a with Modbus Meter WattNode SE-WND-3Y-400-MB. The meter is connected to the inverter via a separate RS485-bus. 
+The inverter is connected to the LAN and with the ModBus TCP protocol you read lots of parameters from both the inverter as well as the meter. 
 
 ### Detailed description
 With this project I'm monitoring the data of both units with my eq3 / HomeMatic CCU2 (yeah, the old one ;-)). The data is read in short intervalls with a bash-based daemon and written to the data logs of CUxD. A couple of values are also written to system variables to be shown in the WebUI of the CCU and via XML-API / home24 app.
 When you change the way of writing the data, it should be usable for other logging sinks too.
+Why Bash? Bash isn't very handy compared to modern scripting language, yes, but - see above - it should run on the HomeMatic CCU...
 
 ### Contributions
 * Thanks to jens-maus for his great [hm_pdetect](https://github.com/jens-maus/hm_pdetect) - it's the base for the bash script and installation on the CCU...
@@ -24,3 +25,6 @@ My SE5K is using SunSpec mapping 103, the meter 203.
 ### Links
 * [https://www.solaredge.com/sites/default/files/sunspec-implementation-technical-note-de.pdf](Technical Note SunSpec-Implementation)
 * [https://sunspec.org/wp-content/uploads/2019/10/SunSpecInformationModelReference20170928.xlsx](SunSpec Register Mapping)
+
+#### Other SunSpec / SE-Monitoring Solutions
+* [https://github.com/tjko/sunspec-monitor](SunSpec-Monitor), Perl-based

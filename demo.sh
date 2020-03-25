@@ -12,7 +12,11 @@ DECSEPERATOR=.
 # Settings
 inverterIP="192.168.30.45"
 inverterModBusPort="502"
-debug=0    # 0 debug active
+if [ "$1" = "" ]; then
+    debug=0
+else 
+    debug=1    # 1 debug active
+fi
 
 callModBus="tclsh /usr/local/addons/modbus/modbus_interface.tcl $inverterIP $inverterModBusPort 1 03" # fiex on ID 1 & Read
 
@@ -295,7 +299,7 @@ function ReadInverterCommonData() {
     inverterDataDict[Vr]=$(GetStringRegister $(($invCommonBlock + 42)) 8)
     inverterDataDict[SN]=$(GetStringRegister $(($invCommonBlock + 50)) 16)
     inverterDataDict[DA]=$(GetUInt16Register $(($invCommonBlock + 66)))
-    if [ $debug ]; then
+    if (( debug )); then
         echo "ID : ${inverterDataDict[ID]}"
         echo "DID: ${inverterDataDict[DID]}"
         echo "L  : ${inverterDataDict[L]}"
@@ -321,7 +325,7 @@ function ReadMeterCommonData() {
     meterDataDict[Vr]=$(GetStringRegister $(($meterCommonBlock + 42)) 8)
     meterDataDict[SN]=$(GetStringRegister $(($meterCommonBlock + 50)) 16)
     meterDataDict[DA]=$(GetUInt16Register $(($meterCommonBlock + 66)))
-    if [ $debug ]; then
+    if ((debug)); then
         echo "ID : ${meterDataDict[ID]}"
         echo "L  : ${meterDataDict[L]}"
         echo "Mn : ${meterDataDict[Mn]}"
@@ -346,7 +350,7 @@ function ReadInverterID103() {
 
     val=$(GetUInt16Register $((invModel103Block + 0)))
     if [ $val -eq 103 ]; then
-        if [ $debug] ]; then 
+        if ((debug)); then 
             echo "ID     : $val (matched)"
         fi
     else
@@ -355,7 +359,7 @@ function ReadInverterID103() {
     fi
     val=$(GetUInt16Register $((invModel103Block + 1)))
     if [ $val -eq 50 ]; then
-        if [ $debug] ]; then 
+        if ((debug)); then 
             echo "L      : $val (matched)"
         fi
     else
@@ -414,7 +418,7 @@ function ReadInverterID103() {
     inverterDataDict[StVnd]="$(GetUInt16Register $((invModel103Block + 39)))"
     inverterDataDict[Evt1]="$(GetInverterErrorState $((invModel103Block + 40)))" 
 
-    if [ $debug ]; then
+    if ((debug)); then
         echo "A      : ${inverterDataDict[A]}"
         echo "AphA   : ${inverterDataDict[AphA]}"
         echo "AphB   : ${inverterDataDict[AphB]}"
@@ -454,72 +458,75 @@ function ReadMeterID203() {
 
     val=$(GetUInt16Register $((meterModel203Block + 0)))
     if [ $val -eq 203 ]; then
-        echo "ID           : $val (matched)"
+        if ((debug)); then
+            echo "ID           : $val (matched)"
+        fi
     else
         echo "ID           : $val (UNMATCHED - expected 103)"
         return $RETURN_FAILURE
     fi
     val=$(GetUInt16Register $((meterModel203Block + 1)))
     if [ $val -eq 105 ]; then
-        echo "L            : $val (matched)"
+        if ((debug)); then
+            echo "L            : $val (matched)"
+        fi
     else
         echo "L            : $val (UNMATCHED - expected 50)"
         return $RETURN_FAILURE
     fi
 
     scale=$(GetScaleFactor $((meterModel203Block + 6)))
-    #echo "Amp Scale $scale"
-    echo "A            : $(GetScaledUInt16FloatValue $((meterModel203Block + 2)) $scale) A"
-    echo "AphA         : $(GetScaledUInt16FloatValue $((meterModel203Block + 3)) $scale) A"
-    echo "AphB         : $(GetScaledUInt16FloatValue $((meterModel203Block + 4)) $scale) A"
-    echo "AphC         : $(GetScaledUInt16FloatValue $((meterModel203Block + 5)) $scale) A"
+    meterDataDict[A]="$(GetScaledUInt16FloatValue $((meterModel203Block + 2)) $scale) A"
+    meterDataDict[AphA]="$(GetScaledUInt16FloatValue $((meterModel203Block + 3)) $scale) A"
+    meterDataDict[AphB]="$(GetScaledUInt16FloatValue $((meterModel203Block + 4)) $scale) A"
+    meterDataDict[AphC]="$(GetScaledUInt16FloatValue $((meterModel203Block + 5)) $scale) A"
 
     scale=$(GetScaleFactor $((meterModel203Block + 15)))
-    echo "PhV          : $(GetScaledUInt16FloatValue $((meterModel203Block + 7)) $scale) V"
-    echo "PhVphA       : $(GetScaledUInt16FloatValue $((meterModel203Block + 8)) $scale) V"
-    echo "PhVphB       : $(GetScaledUInt16FloatValue $((meterModel203Block + 9)) $scale) V"
-    echo "PVphC        : $(GetScaledUInt16FloatValue $((meterModel203Block + 10)) $scale) V"
-    echo "PPV          : $(GetScaledUInt16FloatValue $((meterModel203Block + 11)) $scale) V"
-    echo "PhVphAB      : $(GetScaledUInt16FloatValue $((meterModel203Block + 12)) $scale) V"
-    echo "PhVphBC      : $(GetScaledUInt16FloatValue $((meterModel203Block + 13)) $scale) V"
-    echo "PhVphCA      : $(GetScaledUInt16FloatValue $((meterModel203Block + 14)) $scale) V"
+    meterDataDict[PhV]="$(GetScaledUInt16FloatValue $((meterModel203Block + 7)) $scale) V"
+    meterDataDict[PhVphA]="$(GetScaledUInt16FloatValue $((meterModel203Block + 8)) $scale) V"
+    meterDataDict[PhVphB]="$(GetScaledUInt16FloatValue $((meterModel203Block + 9)) $scale) V"
+    meterDataDict[PVphC]="$(GetScaledUInt16FloatValue $((meterModel203Block + 10)) $scale) V"
+    meterDataDict[PPV]="$(GetScaledUInt16FloatValue $((meterModel203Block + 11)) $scale) V"
+    meterDataDict[PhVphAB]="$(GetScaledUInt16FloatValue $((meterModel203Block + 12)) $scale) V"
+    meterDataDict[PhVphBC]="$(GetScaledUInt16FloatValue $((meterModel203Block + 13)) $scale) V"
+    meterDataDict[PhVphCA]="$(GetScaledUInt16FloatValue $((meterModel203Block + 14)) $scale) V"
 
     scale=$(GetScaleFactor $((meterModel203Block + 17)))
-    echo "Hz           : $(GetScaledUInt16FloatValue $((meterModel203Block + 16)) $scale) Hz"
+    meterDataDict[Hz]="$(GetScaledUInt16FloatValue $((meterModel203Block + 16)) $scale) Hz"
 
     scale=$(GetScaleFactor $((meterModel203Block + 22)))
-    echo "W            : $(GetScaledUInt16FloatValue $((meterModel203Block + 18)) $scale) W"
-    echo "WphA         : $(GetScaledUInt16FloatValue $((meterModel203Block + 19)) $scale) W"
-    echo "WphB         : $(GetScaledUInt16FloatValue $((meterModel203Block + 20)) $scale) W"
-    echo "WphC         : $(GetScaledUInt16FloatValue $((meterModel203Block + 21)) $scale) W"
+    meterDataDict[W]="$(GetScaledUInt16FloatValue $((meterModel203Block + 18)) $scale) W"
+    meterDataDict[WphA]="$(GetScaledUInt16FloatValue $((meterModel203Block + 19)) $scale) W"
+    meterDataDict[WphB]="$(GetScaledUInt16FloatValue $((meterModel203Block + 20)) $scale) W"
+    meterDataDict[WphC]="$(GetScaledUInt16FloatValue $((meterModel203Block + 21)) $scale) W"
 
     scale=$(GetScaleFactor $((meterModel203Block + 27)))
-    echo "VA           : $(GetScaledUInt16FloatValue $((meterModel203Block + 23)) $scale) VA"
-    echo "VAphA        : $(GetScaledUInt16FloatValue $((meterModel203Block + 24)) $scale) VA"
-    echo "VAphB        : $(GetScaledUInt16FloatValue $((meterModel203Block + 25)) $scale) VA"
-    echo "VAphC        : $(GetScaledUInt16FloatValue $((meterModel203Block + 26)) $scale) VA"
+    meterDataDict[VA]="$(GetScaledUInt16FloatValue $((meterModel203Block + 23)) $scale) VA"
+    meterDataDict[VAphA]="$(GetScaledUInt16FloatValue $((meterModel203Block + 24)) $scale) VA"
+    meterDataDict[VAphB]="$(GetScaledUInt16FloatValue $((meterModel203Block + 25)) $scale) VA"
+    meterDataDict[VAphC]="$(GetScaledUInt16FloatValue $((meterModel203Block + 26)) $scale) VA"
 
     scale=$(GetScaleFactor $((meterModel203Block + 32)))
-    echo "VAR          : $(GetScaledUInt16FloatValue $((meterModel203Block + 28)) $scale) var"
-    echo "VARphA       : $(GetScaledUInt16FloatValue $((meterModel203Block + 29)) $scale) var"
-    echo "VARphB       : $(GetScaledUInt16FloatValue $((meterModel203Block + 30)) $scale) var"
-    echo "VARphC       : $(GetScaledUInt16FloatValue $((meterModel203Block + 31)) $scale) var"
+    meterDataDict[VAR]="$(GetScaledUInt16FloatValue $((meterModel203Block + 28)) $scale) var"
+    meterDataDict[VARphA]="$(GetScaledUInt16FloatValue $((meterModel203Block + 29)) $scale) var"
+    meterDataDict[VARphB]="$(GetScaledUInt16FloatValue $((meterModel203Block + 30)) $scale) var"
+    meterDataDict[VARphC]="$(GetScaledUInt16FloatValue $((meterModel203Block + 31)) $scale) var"
 
     scale=$(GetScaleFactor $((meterModel203Block + 37)))
-    echo "PF           : $(GetScaledUInt16FloatValue $((meterModel203Block + 33)) $scale) %"
-    echo "PFphA        : $(GetScaledUInt16FloatValue $((meterModel203Block + 34)) $scale) %"
-    echo "PFphB        : $(GetScaledUInt16FloatValue $((meterModel203Block + 35)) $scale) %"
-    echo "PFphC        : $(GetScaledUInt16FloatValue $((meterModel203Block + 36)) $scale) %"
+    meterDataDict[PF]="$(GetScaledUInt16FloatValue $((meterModel203Block + 33)) $scale) %"
+    meterDataDict[PFphA]="$(GetScaledUInt16FloatValue $((meterModel203Block + 34)) $scale) %"
+    meterDataDict[PFphB]="$(GetScaledUInt16FloatValue $((meterModel203Block + 35)) $scale) %"
+    meterDataDict[PFphC]="$(GetScaledUInt16FloatValue $((meterModel203Block + 36)) $scale) %"
 
     scale=$(GetScaleFactor $((meterModel203Block + 54)))
-    echo "TotWhExp     : $(GetScaledUInt32FloatValue $((meterModel203Block + 38)) $scale) Wh"
-    echo "TotWhExpPhA  : $(GetScaledUInt32FloatValue $((meterModel203Block + 40)) $scale) Wh"
-    echo "TotWhExpPhB  : $(GetScaledUInt32FloatValue $((meterModel203Block + 42)) $scale) Wh"
-    echo "TotWhExpPnC  : $(GetScaledUInt32FloatValue $((meterModel203Block + 44)) $scale) Wh"
-    echo "TotWhImp     : $(GetScaledUInt32FloatValue $((meterModel203Block + 46)) $scale) Wh"
-    echo "TotWhImpPhA  : $(GetScaledUInt32FloatValue $((meterModel203Block + 48)) $scale) Wh"
-    echo "TotWhImpPhB  : $(GetScaledUInt32FloatValue $((meterModel203Block + 50)) $scale) Wh"
-    echo "TotWhImpPnC  : $(GetScaledUInt32FloatValue $((meterModel203Block + 52)) $scale) Wh"
+    meterDataDict[TotWhExp]="$(GetScaledUInt32FloatValue $((meterModel203Block + 38)) $scale) Wh"
+    meterDataDict[TotWhExpPhA]="$(GetScaledUInt32FloatValue $((meterModel203Block + 40)) $scale) Wh"
+    meterDataDict[TotWhExpPhB]="$(GetScaledUInt32FloatValue $((meterModel203Block + 42)) $scale) Wh"
+    meterDataDict[TotWhExpPnC]="$(GetScaledUInt32FloatValue $((meterModel203Block + 44)) $scale) Wh"
+    meterDataDict[TotWhImp]="$(GetScaledUInt32FloatValue $((meterModel203Block + 46)) $scale) Wh"
+    meterDataDict[TotWhImpPhA]="$(GetScaledUInt32FloatValue $((meterModel203Block + 48)) $scale) Wh"
+    meterDataDict[TotWhImpPhB]="$(GetScaledUInt32FloatValue $((meterModel203Block + 50)) $scale) Wh"
+    meterDataDict[TotWhImpPnC]="$(GetScaledUInt32FloatValue $((meterModel203Block + 52)) $scale) Wh"
 
     # feels unsed in WattNode SE-WND-3Y-400-MB
     # scale=$(GetScaleFactor $((meterModel203Block + 71)))
@@ -550,7 +557,50 @@ function ReadMeterID203() {
     # echo "TotVArhExpQ4PhB: $(GetScaledUInt32FloatValue $((meterModel203Block + 100)) $scale) varh"
     # echo "TotVArhExpQ4PhC: $(GetScaledUInt32FloatValue $((meterModel203Block + 102)) $scale) varh"
 
-    echo "Evt          : $(GetMeterErrorState $((meterModel203Block + 105)))"
+    meterDataDict[Evt]="$(GetMeterErrorState $((meterModel203Block + 105)))"
+
+    if ((debug)); then
+        echo "A            : ${meterDataDict[A]}"
+        echo "AphA         : ${meterDataDict[AphA]}"
+        echo "AphB         : ${meterDataDict[AphB]}"
+        echo "AphC         : ${meterDataDict[AphC]}"
+        echo "PhV          : ${meterDataDict[PhV]}"
+        echo "PhVphA       : ${meterDataDict[PhVphA]}"
+        echo "PhVphB       : ${meterDataDict[PhVphB]}"
+        echo "PVphC        : ${meterDataDict[PVphC]}"
+        echo "PPV          : ${meterDataDict[PPV]}"
+        echo "PhVphAB      : ${meterDataDict[PhVphAB]}"
+        echo "PhVphBC      : ${meterDataDict[PhVphBC]}"
+        echo "PhVphCA      : ${meterDataDict[PhVphCA]}"
+        echo "Hz           : ${meterDataDict[Hz]}"
+        echo "W            : ${meterDataDict[W]}"
+        echo "WphA         : ${meterDataDict[WphA]}"
+        echo "WphB         : ${meterDataDict[WphB]}"
+        echo "WphC         : ${meterDataDict[WphC]}"
+        echo "VA           : ${meterDataDict[VA]}"
+        echo "VAphA        : ${meterDataDict[VAphA]}"
+        echo "VAphB        : ${meterDataDict[VAphB]}"
+        echo "VAphC        : ${meterDataDict[VAphC]}"
+        echo "VAR          : ${meterDataDict[VAR]}"
+        echo "VARphA       : ${meterDataDict[VARphA]}"
+        echo "VARphB       : ${meterDataDict[VARphB]}"
+        echo "VARphC       : ${meterDataDict[VARphC]}"
+        echo "PF           : ${meterDataDict[PF]}"
+        echo "PFphA        : ${meterDataDict[PFphA]}"
+        echo "PFphB        : ${meterDataDict[PFphB]}"
+        echo "PFphC        : ${meterDataDict[PFphC]}"
+        echo "TotWhExp     : ${meterDataDict[TotWhExp]}"
+        echo "TotWhExpPhA  : ${meterDataDict[TotWhExpPhA]}"
+        echo "TotWhExpPhB  : ${meterDataDict[TotWhExpPhB]}"
+        echo "TotWhExpPnC  : ${meterDataDict[TotWhExpPnC]}"
+        echo "TotWhImp     : ${meterDataDict[TotWhImp]}"
+        echo "TotWhImpPhA  : ${meterDataDict[TotWhImpPhA]}"
+        echo "TotWhImpPhB  : ${meterDataDict[TotWhImpPhB]}"
+        echo "TotWhImpPnC  : ${meterDataDict[TotWhImpPnC]}"
+        echo "Evt          : ${meterDataDict[Evt]}"
+    fi
+
+    ClearBulkData
 }
 
 # IsBulkAvailable
@@ -584,7 +634,7 @@ function ReadMeterID203() {
 
 ReadInverterCommonData
 ReadMeterCommonData
-echo ""
+echo "Start Inverter"
 ReadInverterID103
-echo ""
+echo "Start Meter"
 ReadMeterID203

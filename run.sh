@@ -45,4 +45,4 @@ fi
 # execute semon_ccu in non-daemon mode
 export PATH="${ADDON_DIR}/bin:${PATH}"
 export LD_LIBRARY_PATH="${ADDON_DIR}/bin:${LD_LIBRARY_PATH}"
-${ADDON_DIR}/bin/semon_ccu.sh >/dev/null 2>&1
+${ADDON_DIR}/bin/demo.sh #>/dev/null 2>&1

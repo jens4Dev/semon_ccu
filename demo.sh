@@ -1,10 +1,6 @@
 #!/usr/bin/env bash
 #
 
-LC_ALL=C; export LC_ALL
-: 'trivial cases first, yet parseable for historic shells'
-case $BASH_VERSION in *.*) { echo "bash $BASH_VERSION";};;esac
-
 # Experimente...
 
 # global return status variables
@@ -16,6 +12,7 @@ DECSEPERATOR=.
 # Settings
 inverterIP="192.168.30.45"
 inverterModBusPort="502"
+debug=0    # 0 debug active
 
 callModBus="tclsh /usr/local/addons/modbus/modbus_interface.tcl $inverterIP $inverterModBusPort 1 03" # fiex on ID 1 & Read
 
@@ -25,7 +22,7 @@ meterCommonBlock=40121
 meterModel203Block=40188
 
 ## Generic functions to read modbus register
-declare -a dataBlock # if filled value are read from here instead of bus -> bulk read, [0] contains offset
+declare -a modBusDataStore # if filled value are read from here instead of bus -> bulk read, [0] contains offset
 
 function GetBulkValue() {
     local register=$1
@@ -33,11 +30,11 @@ function GetBulkValue() {
 
     #echo "Read $register for $length - "
     local val=""
-    register=$(($register - ${dataBlock[0]} + 1)) # fix offset
+    register=$(($register - ${modBusDataStore[0]} + 1)) # fix offset
     length=$(($register + $length - 1))
     #echo "Start index $register, end index $length - "
     for (( ii=$register ; ii <= $length ; ii++ )); do
-        val="$val ${dataBlock[ii]}"
+        val="$val ${modBusDataStore[ii]}"
     done
     echo $val
 }
@@ -49,7 +46,7 @@ function ReadBulkData() {
 
     local val=$($callModBus $register $length)
     ret=$?
-    dataBlock=( $register $val )
+    modBusDataStore=( $register $val )
 
     if [ $ret -eq 0 ]; then
         return $RETURN_SUCCESS
@@ -59,11 +56,11 @@ function ReadBulkData() {
 }
 
 function ClearBulkData() {
-    unset dataBlock
+    unset modBusDataStore
 }
 
 function IsBulkAvailable() {
-    if [[ ${dataBlock[@]:+${dataBlock[@]}} ]]; then
+    if [[ ${modBusDataStore[@]:+${modBusDataStore[@]}} ]]; then
         return $RETURN_SUCCESS
     else
         return $RETURN_FAILURE
@@ -156,17 +153,6 @@ function GetScaleFactor() {
     local val=$(GetModBusValue $register 1)
     local ret=$?
     echo $val
-    # val=${val#-}
-
-    # if [ $val -eq 0 ]; then
-    #     echo 1
-    # elif [ $val -eq 1 ]; then
-    #     echo 10
-    # elif [ $val -eq 2 ]; then
-    #     echo 100
-    # elif [ $val -eq 3 ]; then
-    #     echo 1000
-    # fi
     return $ret
 }
 
@@ -176,9 +162,6 @@ function GetScaledUInt32FloatValue() {
 
     local val=$(GetUInt32Register $register)
     local ret=$?
-
-    # numerical solution scale factor set to 1 / 10 / 100
-    #m=34; awk -v m=$m 'BEGIN { print 1 - ((m - 20) / 34) }'
 
     # string solution - scale 0 / -1 / -2 / ..
     if [ "$scale" = "" ]; then
@@ -485,47 +468,48 @@ function ReadMeterID203() {
     echo "TotWhImpPhB  : $(GetScaledUInt32FloatValue $((meterModel203Block + 50)) $scale) Wh"
     echo "TotWhImpPnC  : $(GetScaledUInt32FloatValue $((meterModel203Block + 52)) $scale) Wh"
 
-    scale=$(GetScaleFactor $((meterModel203Block + 71)))
-    echo "TotVAhExp    : $(GetScaledUInt32FloatValue $((meterModel203Block + 55)) $scale) VAh"
-    echo "TotVAhExpPhA : $(GetScaledUInt32FloatValue $((meterModel203Block + 57)) $scale) VAh"
-    echo "TotVAhExpPhB : $(GetScaledUInt32FloatValue $((meterModel203Block + 59)) $scale) VAh"
-    echo "TotVAhExpPnC : $(GetScaledUInt32FloatValue $((meterModel203Block + 61)) $scale) VAh"
-    echo "TotVAhImp    : $(GetScaledUInt32FloatValue $((meterModel203Block + 63)) $scale) VAh"
-    echo "TotVAhImpPhA : $(GetScaledUInt32FloatValue $((meterModel203Block + 65)) $scale) VAh"
-    echo "TotVAhImpPhB : $(GetScaledUInt32FloatValue $((meterModel203Block + 67)) $scale) VAh"
-    echo "TotVAhImpPhC : $(GetScaledUInt32FloatValue $((meterModel203Block + 69)) $scale) VAh"
+    # feels unsed in WattNode SE-WND-3Y-400-MB
+    # scale=$(GetScaleFactor $((meterModel203Block + 71)))
+    # echo "TotVAhExp    : $(GetScaledUInt32FloatValue $((meterModel203Block + 55)) $scale) VAh"
+    # echo "TotVAhExpPhA : $(GetScaledUInt32FloatValue $((meterModel203Block + 57)) $scale) VAh"
+    # echo "TotVAhExpPhB : $(GetScaledUInt32FloatValue $((meterModel203Block + 59)) $scale) VAh"
+    # echo "TotVAhExpPnC : $(GetScaledUInt32FloatValue $((meterModel203Block + 61)) $scale) VAh"
+    # echo "TotVAhImp    : $(GetScaledUInt32FloatValue $((meterModel203Block + 63)) $scale) VAh"
+    # echo "TotVAhImpPhA : $(GetScaledUInt32FloatValue $((meterModel203Block + 65)) $scale) VAh"
+    # echo "TotVAhImpPhB : $(GetScaledUInt32FloatValue $((meterModel203Block + 67)) $scale) VAh"
+    # echo "TotVAhImpPhC : $(GetScaledUInt32FloatValue $((meterModel203Block + 69)) $scale) VAh"
 
-    scale=$(GetScaleFactor $((meterModel203Block + 104)))
-    echo "TotVArhImpQ1   : $(GetScaledUInt32FloatValue $((meterModel203Block + 72)) $scale) varh"
-    echo "TotVArhImpQ1PhA: $(GetScaledUInt32FloatValue $((meterModel203Block + 74)) $scale) varh"
-    echo "TotVArhImpQ1PhB: $(GetScaledUInt32FloatValue $((meterModel203Block + 76)) $scale) varh"
-    echo "TotVArhImpQ1PhC: $(GetScaledUInt32FloatValue $((meterModel203Block + 78)) $scale) varh"
-    echo "TotVArhImpQ2   : $(GetScaledUInt32FloatValue $((meterModel203Block + 80)) $scale) varh"
-    echo "TotVArhImpQ2PhA: $(GetScaledUInt32FloatValue $((meterModel203Block + 82)) $scale) varh"
-    echo "TotVArhImpQ2PhB: $(GetScaledUInt32FloatValue $((meterModel203Block + 84)) $scale) varh"
-    echo "TotVArhImpQ2PhC: $(GetScaledUInt32FloatValue $((meterModel203Block + 86)) $scale) varh"
-    echo "TotVArhExpQ3   : $(GetScaledUInt32FloatValue $((meterModel203Block + 88)) $scale) varh"
-    echo "TotVArhExpQ3PhA: $(GetScaledUInt32FloatValue $((meterModel203Block + 90)) $scale) varh"
-    echo "TotVArhExpQ3PhB: $(GetScaledUInt32FloatValue $((meterModel203Block + 92)) $scale) varh"
-    echo "TotVArhExpQ3PhC: $(GetScaledUInt32FloatValue $((meterModel203Block + 94)) $scale) varh"
-    echo "TotVArhExpQ4   : $(GetScaledUInt32FloatValue $((meterModel203Block + 96)) $scale) varh"
-    echo "TotVArhExpQ4PhA: $(GetScaledUInt32FloatValue $((meterModel203Block + 98)) $scale) varh"
-    echo "TotVArhExpQ4PhB: $(GetScaledUInt32FloatValue $((meterModel203Block + 100)) $scale) varh"
-    echo "TotVArhExpQ4PhC: $(GetScaledUInt32FloatValue $((meterModel203Block + 102)) $scale) varh"
+    # scale=$(GetScaleFactor $((meterModel203Block + 104)))
+    # echo "TotVArhImpQ1   : $(GetScaledUInt32FloatValue $((meterModel203Block + 72)) $scale) varh"
+    # echo "TotVArhImpQ1PhA: $(GetScaledUInt32FloatValue $((meterModel203Block + 74)) $scale) varh"
+    # echo "TotVArhImpQ1PhB: $(GetScaledUInt32FloatValue $((meterModel203Block + 76)) $scale) varh"
+    # echo "TotVArhImpQ1PhC: $(GetScaledUInt32FloatValue $((meterModel203Block + 78)) $scale) varh"
+    # echo "TotVArhImpQ2   : $(GetScaledUInt32FloatValue $((meterModel203Block + 80)) $scale) varh"
+    # echo "TotVArhImpQ2PhA: $(GetScaledUInt32FloatValue $((meterModel203Block + 82)) $scale) varh"
+    # echo "TotVArhImpQ2PhB: $(GetScaledUInt32FloatValue $((meterModel203Block + 84)) $scale) varh"
+    # echo "TotVArhImpQ2PhC: $(GetScaledUInt32FloatValue $((meterModel203Block + 86)) $scale) varh"
+    # echo "TotVArhExpQ3   : $(GetScaledUInt32FloatValue $((meterModel203Block + 88)) $scale) varh"
+    # echo "TotVArhExpQ3PhA: $(GetScaledUInt32FloatValue $((meterModel203Block + 90)) $scale) varh"
+    # echo "TotVArhExpQ3PhB: $(GetScaledUInt32FloatValue $((meterModel203Block + 92)) $scale) varh"
+    # echo "TotVArhExpQ3PhC: $(GetScaledUInt32FloatValue $((meterModel203Block + 94)) $scale) varh"
+    # echo "TotVArhExpQ4   : $(GetScaledUInt32FloatValue $((meterModel203Block + 96)) $scale) varh"
+    # echo "TotVArhExpQ4PhA: $(GetScaledUInt32FloatValue $((meterModel203Block + 98)) $scale) varh"
+    # echo "TotVArhExpQ4PhB: $(GetScaledUInt32FloatValue $((meterModel203Block + 100)) $scale) varh"
+    # echo "TotVArhExpQ4PhC: $(GetScaledUInt32FloatValue $((meterModel203Block + 102)) $scale) varh"
 
     echo "Evt          : $(GetMeterErrorState $((meterModel203Block + 105)))"
 }
 
 # IsBulkAvailable
 # echo "1 = $?"
-# dataBlock=(256)
+# modBusDataStore=(256)
 # IsBulkAvailable
 # echo "0 = $?"
-# dataBlock=(256 3)
-# unset dataBlock[0]
+# modBusDataStore=(256 3)
+# unset modBusDataStore[0]
 # IsBulkAvailable
 # echo "0 = $?"
-# unset dataBlock[0]
+# unset modBusDataStore[0]
 # IsBulkAvailable
 # echo "1/0 = $?"
 # ClearBulkData
@@ -535,8 +519,8 @@ function ReadMeterID203() {
 # ReadBulkData $invModel103Block 50
 # IsBulkAvailable
 # echo "0 = $?"
-# echo "dataBlock: ${dataBlock[*]}"
-# echo "# in dataBlock ${#dataBlock[*]}"
+# echo "modBusDataStore: ${modBusDataStore[*]}"
+# echo "# in modBusDataStore ${#modBusDataStore[*]}"
 # echo $(GetBulkValue $((invModel103Block + 0)) 1)
 # echo $(GetBulkValue $((invModel103Block + 2)) 6)
 # echo $(GetBulkValue $((invModel103Block + 6)) 54)

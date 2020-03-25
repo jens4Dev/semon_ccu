@@ -22,7 +22,11 @@ meterCommonBlock=40121
 meterModel203Block=40188
 
 ## Generic functions to read modbus register
-declare -a modBusDataStore # if filled value are read from here instead of bus -> bulk read, [0] contains offset
+
+declare -a modBusDataCache  # if filled value are read from here instead of bus -> bulk read, [0] contains offset
+
+declare -A inverterDataDict # stores last read values - inverter
+declare -A meterDataDict    # stores last read values - power meter
 
 function GetBulkValue() {
     local register=$1
@@ -30,11 +34,11 @@ function GetBulkValue() {
 
     #echo "Read $register for $length - "
     local val=""
-    register=$(($register - ${modBusDataStore[0]} + 1)) # fix offset
+    register=$(($register - ${modBusDataCache[0]} + 1)) # fix offset
     length=$(($register + $length - 1))
     #echo "Start index $register, end index $length - "
     for (( ii=$register ; ii <= $length ; ii++ )); do
-        val="$val ${modBusDataStore[ii]}"
+        val="$val ${modBusDataCache[ii]}"
     done
     echo $val
 }
@@ -46,7 +50,7 @@ function ReadBulkData() {
 
     local val=$($callModBus $register $length)
     ret=$?
-    modBusDataStore=( $register $val )
+    modBusDataCache=( $register $val )
 
     if [ $ret -eq 0 ]; then
         return $RETURN_SUCCESS
@@ -56,11 +60,11 @@ function ReadBulkData() {
 }
 
 function ClearBulkData() {
-    unset modBusDataStore
+    unset modBusDataCache
 }
 
 function IsBulkAvailable() {
-    if [[ ${modBusDataStore[@]:+${modBusDataStore[@]}} ]]; then
+    if [[ ${modBusDataCache[@]:+${modBusDataCache[@]}} ]]; then
         return $RETURN_SUCCESS
     else
         return $RETURN_FAILURE
@@ -282,15 +286,26 @@ function GetMeterErrorState() {
 function ReadInverterCommonData() {
     ReadBulkData $invCommonBlock 66
     # inverter does not follow SunSpec ID 1...
-    echo "ID : $(GetStringRegister $(($invCommonBlock + 0)) 2)"
-    echo "DID: $(GetUInt16Register $(($invCommonBlock + 2)))"
-    echo "L  : $(GetUInt16Register $(($invCommonBlock + 3)))"
-    echo "Mn : $(GetStringRegister $(($invCommonBlock + 4)) 16)"
-    echo "Md : $(GetStringRegister $(($invCommonBlock + 19)) 16)"
-    echo "Opt: $(GetStringRegister $(($invCommonBlock + 34)) 8)"
-    echo "Vr : $(GetStringRegister $(($invCommonBlock + 42)) 8)"
-    echo "SN : $(GetStringRegister $(($invCommonBlock + 50)) 16)"
-    echo "DA : $(GetUInt16Register $(($invCommonBlock + 66)))"
+    inverterDataDict[ID]=$(GetStringRegister $(($invCommonBlock + 0)) 2)
+    inverterDataDict[DID]=$(GetUInt16Register $(($invCommonBlock + 2)))
+    inverterDataDict[L]=$(GetUInt16Register $(($invCommonBlock + 3)))
+    inverterDataDict[Mn]=$(GetStringRegister $(($invCommonBlock + 4)) 16)
+    inverterDataDict[Md]=$(GetStringRegister $(($invCommonBlock + 19)) 16)
+    inverterDataDict[Opt]=$(GetStringRegister $(($invCommonBlock + 34)) 8)
+    inverterDataDict[Vr]=$(GetStringRegister $(($invCommonBlock + 42)) 8)
+    inverterDataDict[SN]=$(GetStringRegister $(($invCommonBlock + 50)) 16)
+    inverterDataDict[DA]=$(GetUInt16Register $(($invCommonBlock + 66)))
+    if [ $debug ]; then
+        echo "ID : ${inverterDataDict[ID]}"
+        echo "DID: ${inverterDataDict[DID]}"
+        echo "L  : ${inverterDataDict[L]}"
+        echo "Mn : ${inverterDataDict[Mn]}"
+        echo "Md : ${inverterDataDict[Md]}"
+        echo "Opt: ${inverterDataDict[Opt]}"
+        echo "Vr : ${inverterDataDict[Vr]}"
+        echo "SN : ${inverterDataDict[SN]}"
+        echo "DA : ${inverterDataDict[DA]}"
+    fi
     ClearBulkData
 
     return $RETURN_SUCCESS
@@ -502,14 +517,14 @@ function ReadMeterID203() {
 
 # IsBulkAvailable
 # echo "1 = $?"
-# modBusDataStore=(256)
+# modBusDataCache=(256)
 # IsBulkAvailable
 # echo "0 = $?"
-# modBusDataStore=(256 3)
-# unset modBusDataStore[0]
+# modBusDataCache=(256 3)
+# unset modBusDataCache[0]
 # IsBulkAvailable
 # echo "0 = $?"
-# unset modBusDataStore[0]
+# unset modBusDataCache[0]
 # IsBulkAvailable
 # echo "1/0 = $?"
 # ClearBulkData
@@ -519,8 +534,8 @@ function ReadMeterID203() {
 # ReadBulkData $invModel103Block 50
 # IsBulkAvailable
 # echo "0 = $?"
-# echo "modBusDataStore: ${modBusDataStore[*]}"
-# echo "# in modBusDataStore ${#modBusDataStore[*]}"
+# echo "modBusDataCache: ${modBusDataCache[*]}"
+# echo "# in modBusDataCache ${#modBusDataCache[*]}"
 # echo $(GetBulkValue $((invModel103Block + 0)) 1)
 # echo $(GetBulkValue $((invModel103Block + 2)) 6)
 # echo $(GetBulkValue $((invModel103Block + 6)) 54)

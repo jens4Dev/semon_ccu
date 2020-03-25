@@ -1,6 +1,10 @@
 #!/usr/bin/env bash
 #
 
+LC_ALL=C; export LC_ALL
+: 'trivial cases first, yet parseable for historic shells'
+case $BASH_VERSION in *.*) { echo "bash $BASH_VERSION";};;esac
+
 # Experimente...
 
 # global return status variables

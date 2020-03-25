@@ -313,14 +313,24 @@ function ReadInverterCommonData() {
 
 function ReadMeterCommonData() {
     ReadBulkData $meterCommonBlock 66
-    echo "ID : $(GetUInt16Register $(($meterCommonBlock + 0)))"
-    echo "L  : $(GetUInt16Register $(($meterCommonBlock + 1)))"
-    echo "Mn : $(GetStringRegister $(($meterCommonBlock + 2)) 16)"
-    echo "Md : $(GetStringRegister $(($meterCommonBlock + 18)) 16)"
-    echo "Opt: $(GetStringRegister $(($meterCommonBlock + 34)) 8)"
-    echo "Vr : $(GetStringRegister $(($meterCommonBlock + 42)) 8)"
-    echo "SN : $(GetStringRegister $(($meterCommonBlock + 50)) 16)"
-    echo "DA : $(GetUInt16Register $(($meterCommonBlock + 66)))"
+    meterDataDict[ID]=$(GetUInt16Register $(($meterCommonBlock + 0)))
+    meterDataDict[L]=$(GetUInt16Register $(($meterCommonBlock + 1)))
+    meterDataDict[Mn]=$(GetStringRegister $(($meterCommonBlock + 2)) 16)
+    meterDataDict[Md]=$(GetStringRegister $(($meterCommonBlock + 18)) 16)
+    meterDataDict[Opt]=$(GetStringRegister $(($meterCommonBlock + 34)) 8)
+    meterDataDict[Vr]=$(GetStringRegister $(($meterCommonBlock + 42)) 8)
+    meterDataDict[SN]=$(GetStringRegister $(($meterCommonBlock + 50)) 16)
+    meterDataDict[DA]=$(GetUInt16Register $(($meterCommonBlock + 66)))
+    if [ $debug ]; then
+        echo "ID : ${meterDataDict[ID]}"
+        echo "L  : ${meterDataDict[L]}"
+        echo "Mn : ${meterDataDict[Mn]}"
+        echo "Md : ${meterDataDict[Md]}"
+        echo "Opt: ${meterDataDict[Opt]}"
+        echo "Vr : ${meterDataDict[Vr]}"
+        echo "SN : ${meterDataDict[SN]}"
+        echo "DA : ${meterDataDict[DA]}"
+    fi
     ClearBulkData
 
     return $RETURN_SUCCESS
@@ -336,71 +346,99 @@ function ReadInverterID103() {
 
     val=$(GetUInt16Register $((invModel103Block + 0)))
     if [ $val -eq 103 ]; then
-        echo "ID     : $val (matched)"
+        if [ $debug] ]; then 
+            echo "ID     : $val (matched)"
+        fi
     else
         echo "ID     : $val (UNMATCHED - expected 103)"
         return $RETURN_FAILURE
     fi
     val=$(GetUInt16Register $((invModel103Block + 1)))
     if [ $val -eq 50 ]; then
-        echo "L      : $val (matched)"
+        if [ $debug] ]; then 
+            echo "L      : $val (matched)"
+        fi
     else
         echo "L      : $val (UNMATCHED - expected 50)"
         return $RETURN_FAILURE
     fi
 
     scale=$(GetScaleFactor $((invModel103Block + 6)))
-    #echo "Amp Scale $scale"
-    echo "A      : $(GetScaledUInt16FloatValue $((invModel103Block + 2)) $scale) A"
-    echo "AphA   : $(GetScaledUInt16FloatValue $((invModel103Block + 3)) $scale) A"
-    echo "AphB   : $(GetScaledUInt16FloatValue $((invModel103Block + 4)) $scale) A"
-    echo "AphC   : $(GetScaledUInt16FloatValue $((invModel103Block + 5)) $scale) A"
+    inverterDataDict[A]="$(GetScaledUInt16FloatValue $((invModel103Block + 2)) $scale) A"
+    inverterDataDict[AphA]="$(GetScaledUInt16FloatValue $((invModel103Block + 3)) $scale) A"
+    inverterDataDict[AphB]="$(GetScaledUInt16FloatValue $((invModel103Block + 4)) $scale) A"
+    inverterDataDict[AphC]="$(GetScaledUInt16FloatValue $((invModel103Block + 5)) $scale) A"
 
     scale=$(GetScaleFactor $((invModel103Block + 13)))
-    echo "PPVphAB: $(GetScaledUInt16FloatValue $((invModel103Block + 7)) $scale) V"
-    echo "PPVphBC: $(GetScaledUInt16FloatValue $((invModel103Block + 8)) $scale) V"
-    echo "PPVphCA: $(GetScaledUInt16FloatValue $((invModel103Block + 9)) $scale) V"
-    echo "PPVphA : $(GetScaledUInt16FloatValue $((invModel103Block + 10)) $scale) V"
-    echo "PPVphB : $(GetScaledUInt16FloatValue $((invModel103Block + 11)) $scale) V"
-    echo "PPVphC : $(GetScaledUInt16FloatValue $((invModel103Block + 12)) $scale) V"
+    inverterDataDict[PPVphAB]="$(GetScaledUInt16FloatValue $((invModel103Block + 7)) $scale) V"
+    inverterDataDict[PPVphBC]="$(GetScaledUInt16FloatValue $((invModel103Block + 8)) $scale) V"
+    inverterDataDict[PPVphCA]="$(GetScaledUInt16FloatValue $((invModel103Block + 9)) $scale) V"
+    inverterDataDict[PPVphA]="$(GetScaledUInt16FloatValue $((invModel103Block + 10)) $scale) V"
+    inverterDataDict[PPVphB]="$(GetScaledUInt16FloatValue $((invModel103Block + 11)) $scale) V"
+    inverterDataDict[PPVphC]="$(GetScaledUInt16FloatValue $((invModel103Block + 12)) $scale) V"
 
     scale=$(GetScaleFactor $((invModel103Block + 15)))
-    echo "W      : $(GetScaledUInt16FloatValue $((invModel103Block + 14)) $scale) W"
+    inverterDataDict[W]="$(GetScaledUInt16FloatValue $((invModel103Block + 14)) $scale) W"
 
     scale=$(GetScaleFactor $((invModel103Block + 17)))
-    echo "Hz     : $(GetScaledUInt16FloatValue $((invModel103Block + 16)) $scale) Hz"
+    inverterDataDict[Hz]="$(GetScaledUInt16FloatValue $((invModel103Block + 16)) $scale) Hz"
 
     scale=$(GetScaleFactor $((invModel103Block + 19)))
-    echo "VA     : $(GetScaledUInt16FloatValue $((invModel103Block + 18)) $scale) VA"
+    inverterDataDict[VA]="$(GetScaledUInt16FloatValue $((invModel103Block + 18)) $scale) VA"
 
     scale=$(GetScaleFactor $((invModel103Block + 21)))
-    echo "VAr    : $(GetScaledUInt16FloatValue $((invModel103Block + 20)) $scale) var"
+    inverterDataDict[VAr]="$(GetScaledUInt16FloatValue $((invModel103Block + 20)) $scale) var"
 
     scale=$(GetScaleFactor $((invModel103Block + 23)))
-    echo "PF     : $(GetScaledUInt16FloatValue $((invModel103Block + 22)) $scale) %"
+    inverterDataDict[PF]="$(GetScaledUInt16FloatValue $((invModel103Block + 22)) $scale) %"
 
     scale=$(GetScaleFactor $((invModel103Block + 26)))
-    echo "WH     : $(GetScaledUInt32FloatValue $((invModel103Block + 24)) $scale) Wh"
+    inverterDataDict[WH]="$(GetScaledUInt32FloatValue $((invModel103Block + 24)) $scale) Wh"
 
     scale=$(GetScaleFactor $((invModel103Block + 28)))
-    echo "DCA    : $(GetScaledUInt16FloatValue $((invModel103Block + 27)) $scale) A"
+    inverterDataDict[DCA]="$(GetScaledUInt16FloatValue $((invModel103Block + 27)) $scale) A"
 
     scale=$(GetScaleFactor $((invModel103Block + 30)))
-    echo "DCV    : $(GetScaledUInt16FloatValue $((invModel103Block + 29)) $scale) V"
+    inverterDataDict[DCV]="$(GetScaledUInt16FloatValue $((invModel103Block + 29)) $scale) V"
 
     scale=$(GetScaleFactor $((invModel103Block + 32)))
-    echo "DCW    : $(GetScaledUInt16FloatValue $((invModel103Block + 31)) $scale) W"
+    inverterDataDict[DCW]="$(GetScaledUInt16FloatValue $((invModel103Block + 31)) $scale) W"
 
     scale=$(GetScaleFactor $((invModel103Block + 37)))
-    #echo "TmpCab : $(GetScaledUInt16FloatValue $((invModel103Block + 33)) $scale) °C"   # mandatory but obviously not used..
-    echo "TmpSnk : $(GetScaledUInt16FloatValue $((invModel103Block + 34)) $scale) °C"   # optional but filled
-    #echo "TmpTrns: $(GetScaledUInt16FloatValue $((invModel103Block + 35)) $scale) °C"
-    #echo "TmpOt  : $(GetScaledUInt16FloatValue $((invModel103Block + 36)) $scale) °C"
+    #inverterDataDict[TmpCab]="$(GetScaledUInt16FloatValue $((invModel103Block + 33)) $scale) °C"   # mandatory but obviously not used..
+    inverterDataDict[TmpSnk]="$(GetScaledUInt16FloatValue $((invModel103Block + 34)) $scale) °C"    # optional but filled
+    #inverterDataDict[TmpTrns]="$(GetScaledUInt16FloatValue $((invModel103Block + 35)) $scale) °C"  # seems unused
+    #inverterDataDict[TmpOt]="$(GetScaledUInt16FloatValue $((invModel103Block + 36)) $scale) °C"    # seems unused
 
-    echo "St     : $(GetInverterOperatingState $((invModel103Block + 38)))"
-    echo "StVnd  : $(GetUInt16Register $((invModel103Block + 39)))"
-    echo "Evt1   : $(GetInverterErrorState $((invModel103Block + 40)))" 
+    inverterDataDict[St]="$(GetInverterOperatingState $((invModel103Block + 38)))"
+    inverterDataDict[StVnd]="$(GetUInt16Register $((invModel103Block + 39)))"
+    inverterDataDict[Evt1]="$(GetInverterErrorState $((invModel103Block + 40)))" 
 
+    if [ $debug ]; then
+        echo "A      : ${inverterDataDict[A]}"
+        echo "AphA   : ${inverterDataDict[AphA]}"
+        echo "AphB   : ${inverterDataDict[AphB]}"
+        echo "AphC   : ${inverterDataDict[AphC]}"
+        echo "PPVphAB: ${inverterDataDict[PPVphAB]}"
+        echo "PPVphBC: ${inverterDataDict[PPVphBC]}"
+        echo "PPVphCA: ${inverterDataDict[PPVphCA]}"
+        echo "PPVphA : ${inverterDataDict[PPVphA]}"
+        echo "PPVphB : ${inverterDataDict[PPVphB]}"
+        echo "PPVphC : ${inverterDataDict[PPVphC]}"
+        echo "W      : ${inverterDataDict[W]}"
+        echo "Hz     : ${inverterDataDict[Hz]}"
+        echo "VA     : ${inverterDataDict[VA]}"
+        echo "VAr    : ${inverterDataDict[VAr]}"
+        echo "PF     : ${inverterDataDict[PF]}"
+        echo "WH     : ${inverterDataDict[WH]}"
+        echo "DCA    : ${inverterDataDict[DCA]}"
+        echo "DCV    : ${inverterDataDict[DCV]}"
+        echo "DCW    : ${inverterDataDict[DCW]}"
+        echo "TmpSnk : ${inverterDataDict[TmpSnk]}"
+        echo "St     : ${inverterDataDict[St]}"
+        echo "StVnd  : ${inverterDataDict[StVnd]}"
+        echo "Evt1   : ${inverterDataDict[Evt1]}"
+    fi
     ClearBulkData
 
     return $RETURN_SUCCESS

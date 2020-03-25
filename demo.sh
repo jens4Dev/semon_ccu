@@ -101,6 +101,12 @@ function GetUInt32Register() {
     local vals=( $(GetModBusValue $register 2) )
     local ret=$?
 
+    if [ "${vals[0]}" = "" ]; then
+        vals[0]=0
+    fi
+    if [ "${vals[1]}" = "" ]; then
+        vals[1]=0
+    fi
     echo $((${vals[0]} * 65536 + ${vals[1]}))
 
     return $ret
@@ -171,10 +177,17 @@ function GetScaledUInt32FloatValue() {
     #m=34; awk -v m=$m 'BEGIN { print 1 - ((m - 20) / 34) }'
 
     # string solution - scale 0 / -1 / -2 / ..
-    if [ $scale -lt  0 -a $val -gt 0 ]; then
+    if [ "$scale" = "" ]; then
+        scale=0
+    fi
+    if [ $scale -lt 0 -a $val -gt 0 ]; then
         local valLen=${#val}
         local sepPos=$(($valLen + $scale))
-        echo "${val:0:$sepPos}$DECSEPERATOR${val:$sepPos}"
+        if [ $sepPos -eq 0 ]; then 
+            echo "0$DECSEPERATOR${val:$sepPos}"
+        else
+            echo "${val:0:$sepPos}$DECSEPERATOR${val:$sepPos}"
+        fi
     else
         echo $val
     fi
@@ -189,10 +202,17 @@ function GetScaledUInt16FloatValue() {
     local val=$(GetUInt16Register $register)
     local ret=$?
 
+    if [ "$scale" = "" ]; then
+        scale=0
+    fi
     if [ $scale -lt  0 -a $val -gt 0 ]; then
         local valLen=${#val}
         local sepPos=$(($valLen + $scale))
-        echo "${val:0:$sepPos}$DECSEPERATOR${val:$sepPos}"
+        if [ $sepPos -eq 0 ]; then 
+            echo "0$DECSEPERATOR${val:$sepPos}"
+        else
+            echo "${val:0:$sepPos}$DECSEPERATOR${val:$sepPos}"
+        fi
     else
         echo $val
     fi
@@ -200,7 +220,7 @@ function GetScaledUInt16FloatValue() {
     return $ret
 }
 
-function GetOperatingState() {
+function GetInverterOperatingState() {
     local register=$1
 
     local val=$(GetUInt16Register $register)
@@ -220,7 +240,7 @@ function GetOperatingState() {
     return $ret
 }
 
-function GetErrorState() {
+function GetInverterErrorState() {
     local register=$1
 
     local val=$(GetUInt16Register $register)
@@ -244,6 +264,26 @@ function GetErrorState() {
         13 ) echo "Under temperature";;
         14 ) echo "Generic Memory or Communication error (internal)";;
         15 ) echo "Hardware test failure";;
+        *  ) echo "Unknown error state no $val";;
+    esac
+
+    return $ret
+}
+
+function GetMeterErrorState() {
+    local register=$1
+
+    local val=$(GetUInt16Register $register)
+    local ret=$?
+
+    case $val in
+        0|""  ) echo "None";;
+        2  ) echo "Power Failure";;
+        3  ) echo "Under Voltage";;
+        4  ) echo "Low PF";;
+        5  ) echo "Over Current";;
+        6  ) echo "Over Voltage";;
+        7  ) echo "Missing Sensor";;
         *  ) echo "Unknown error state no $val";;
     esac
 
@@ -355,13 +395,121 @@ function ReadInverterID103() {
     #echo "TmpTrns: $(GetScaledUInt16FloatValue $((invModel103Block + 35)) $scale) °C"
     #echo "TmpOt  : $(GetScaledUInt16FloatValue $((invModel103Block + 36)) $scale) °C"
 
-    echo "St     : $(GetOperatingState $((invModel103Block + 38)))"
+    echo "St     : $(GetInverterOperatingState $((invModel103Block + 38)))"
     echo "StVnd  : $(GetUInt16Register $((invModel103Block + 39)))"
-    echo "Evt1   : $(GetErrorState $((invModel103Block + 40)))" 
+    echo "Evt1   : $(GetInverterErrorState $((invModel103Block + 40)))" 
 
     ClearBulkData
 
     return $RETURN_SUCCESS
+}
+
+function ReadMeterID203() {
+    # Check if we're on the right ID..
+    local val
+    local scale
+
+    # Use bulk read - Get-funcs use this automatically
+    ReadBulkData $meterModel203Block 50
+
+    val=$(GetUInt16Register $((meterModel203Block + 0)))
+    if [ $val -eq 203 ]; then
+        echo "ID           : $val (matched)"
+    else
+        echo "ID           : $val (UNMATCHED - expected 103)"
+        return $RETURN_FAILURE
+    fi
+    val=$(GetUInt16Register $((meterModel203Block + 1)))
+    if [ $val -eq 105 ]; then
+        echo "L            : $val (matched)"
+    else
+        echo "L            : $val (UNMATCHED - expected 50)"
+        return $RETURN_FAILURE
+    fi
+
+    scale=$(GetScaleFactor $((meterModel203Block + 6)))
+    #echo "Amp Scale $scale"
+    echo "A            : $(GetScaledUInt16FloatValue $((meterModel203Block + 2)) $scale) A"
+    echo "AphA         : $(GetScaledUInt16FloatValue $((meterModel203Block + 3)) $scale) A"
+    echo "AphB         : $(GetScaledUInt16FloatValue $((meterModel203Block + 4)) $scale) A"
+    echo "AphC         : $(GetScaledUInt16FloatValue $((meterModel203Block + 5)) $scale) A"
+
+    scale=$(GetScaleFactor $((meterModel203Block + 15)))
+    echo "PhV          : $(GetScaledUInt16FloatValue $((meterModel203Block + 7)) $scale) V"
+    echo "PhVphA       : $(GetScaledUInt16FloatValue $((meterModel203Block + 8)) $scale) V"
+    echo "PhVphB       : $(GetScaledUInt16FloatValue $((meterModel203Block + 9)) $scale) V"
+    echo "PVphC        : $(GetScaledUInt16FloatValue $((meterModel203Block + 10)) $scale) V"
+    echo "PPV          : $(GetScaledUInt16FloatValue $((meterModel203Block + 11)) $scale) V"
+    echo "PhVphAB      : $(GetScaledUInt16FloatValue $((meterModel203Block + 12)) $scale) V"
+    echo "PhVphBC      : $(GetScaledUInt16FloatValue $((meterModel203Block + 13)) $scale) V"
+    echo "PhVphCA      : $(GetScaledUInt16FloatValue $((meterModel203Block + 14)) $scale) V"
+
+    scale=$(GetScaleFactor $((meterModel203Block + 17)))
+    echo "Hz           : $(GetScaledUInt16FloatValue $((meterModel203Block + 16)) $scale) Hz"
+
+    scale=$(GetScaleFactor $((meterModel203Block + 22)))
+    echo "W            : $(GetScaledUInt16FloatValue $((meterModel203Block + 18)) $scale) W"
+    echo "WphA         : $(GetScaledUInt16FloatValue $((meterModel203Block + 19)) $scale) W"
+    echo "WphB         : $(GetScaledUInt16FloatValue $((meterModel203Block + 20)) $scale) W"
+    echo "WphC         : $(GetScaledUInt16FloatValue $((meterModel203Block + 21)) $scale) W"
+
+    scale=$(GetScaleFactor $((meterModel203Block + 27)))
+    echo "VA           : $(GetScaledUInt16FloatValue $((meterModel203Block + 23)) $scale) VA"
+    echo "VAphA        : $(GetScaledUInt16FloatValue $((meterModel203Block + 24)) $scale) VA"
+    echo "VAphB        : $(GetScaledUInt16FloatValue $((meterModel203Block + 25)) $scale) VA"
+    echo "VAphC        : $(GetScaledUInt16FloatValue $((meterModel203Block + 26)) $scale) VA"
+
+    scale=$(GetScaleFactor $((meterModel203Block + 32)))
+    echo "VAR          : $(GetScaledUInt16FloatValue $((meterModel203Block + 28)) $scale) var"
+    echo "VARphA       : $(GetScaledUInt16FloatValue $((meterModel203Block + 29)) $scale) var"
+    echo "VARphB       : $(GetScaledUInt16FloatValue $((meterModel203Block + 30)) $scale) var"
+    echo "VARphC       : $(GetScaledUInt16FloatValue $((meterModel203Block + 31)) $scale) var"
+
+    scale=$(GetScaleFactor $((meterModel203Block + 37)))
+    echo "PF           : $(GetScaledUInt16FloatValue $((meterModel203Block + 33)) $scale) %"
+    echo "PFphA        : $(GetScaledUInt16FloatValue $((meterModel203Block + 34)) $scale) %"
+    echo "PFphB        : $(GetScaledUInt16FloatValue $((meterModel203Block + 35)) $scale) %"
+    echo "PFphC        : $(GetScaledUInt16FloatValue $((meterModel203Block + 36)) $scale) %"
+
+    scale=$(GetScaleFactor $((meterModel203Block + 54)))
+    echo "TotWhExp     : $(GetScaledUInt32FloatValue $((meterModel203Block + 38)) $scale) Wh"
+    echo "TotWhExpPhA  : $(GetScaledUInt32FloatValue $((meterModel203Block + 40)) $scale) Wh"
+    echo "TotWhExpPhB  : $(GetScaledUInt32FloatValue $((meterModel203Block + 42)) $scale) Wh"
+    echo "TotWhExpPnC  : $(GetScaledUInt32FloatValue $((meterModel203Block + 44)) $scale) Wh"
+    echo "TotWhImp     : $(GetScaledUInt32FloatValue $((meterModel203Block + 46)) $scale) Wh"
+    echo "TotWhImpPhA  : $(GetScaledUInt32FloatValue $((meterModel203Block + 48)) $scale) Wh"
+    echo "TotWhImpPhB  : $(GetScaledUInt32FloatValue $((meterModel203Block + 50)) $scale) Wh"
+    echo "TotWhImpPnC  : $(GetScaledUInt32FloatValue $((meterModel203Block + 52)) $scale) Wh"
+
+    scale=$(GetScaleFactor $((meterModel203Block + 71)))
+    echo "TotVAhExp    : $(GetScaledUInt32FloatValue $((meterModel203Block + 55)) $scale) VAh"
+    echo "TotVAhExpPhA : $(GetScaledUInt32FloatValue $((meterModel203Block + 57)) $scale) VAh"
+    echo "TotVAhExpPhB : $(GetScaledUInt32FloatValue $((meterModel203Block + 59)) $scale) VAh"
+    echo "TotVAhExpPnC : $(GetScaledUInt32FloatValue $((meterModel203Block + 61)) $scale) VAh"
+    echo "TotVAhImp    : $(GetScaledUInt32FloatValue $((meterModel203Block + 63)) $scale) VAh"
+    echo "TotVAhImpPhA : $(GetScaledUInt32FloatValue $((meterModel203Block + 65)) $scale) VAh"
+    echo "TotVAhImpPhB : $(GetScaledUInt32FloatValue $((meterModel203Block + 67)) $scale) VAh"
+    echo "TotVAhImpPhC : $(GetScaledUInt32FloatValue $((meterModel203Block + 69)) $scale) VAh"
+
+    scale=$(GetScaleFactor $((meterModel203Block + 104)))
+    echo "TotVArhImpQ1   : $(GetScaledUInt32FloatValue $((meterModel203Block + 72)) $scale) varh"
+    echo "TotVArhImpQ1PhA: $(GetScaledUInt32FloatValue $((meterModel203Block + 74)) $scale) varh"
+    echo "TotVArhImpQ1PhB: $(GetScaledUInt32FloatValue $((meterModel203Block + 76)) $scale) varh"
+    echo "TotVArhImpQ1PhC: $(GetScaledUInt32FloatValue $((meterModel203Block + 78)) $scale) varh"
+    echo "TotVArhImpQ2   : $(GetScaledUInt32FloatValue $((meterModel203Block + 80)) $scale) varh"
+    echo "TotVArhImpQ2PhA: $(GetScaledUInt32FloatValue $((meterModel203Block + 82)) $scale) varh"
+    echo "TotVArhImpQ2PhB: $(GetScaledUInt32FloatValue $((meterModel203Block + 84)) $scale) varh"
+    echo "TotVArhImpQ2PhC: $(GetScaledUInt32FloatValue $((meterModel203Block + 86)) $scale) varh"
+    echo "TotVArhExpQ3   : $(GetScaledUInt32FloatValue $((meterModel203Block + 88)) $scale) varh"
+    echo "TotVArhExpQ3PhA: $(GetScaledUInt32FloatValue $((meterModel203Block + 90)) $scale) varh"
+    echo "TotVArhExpQ3PhB: $(GetScaledUInt32FloatValue $((meterModel203Block + 92)) $scale) varh"
+    echo "TotVArhExpQ3PhC: $(GetScaledUInt32FloatValue $((meterModel203Block + 94)) $scale) varh"
+    echo "TotVArhExpQ4   : $(GetScaledUInt32FloatValue $((meterModel203Block + 96)) $scale) varh"
+    echo "TotVArhExpQ4PhA: $(GetScaledUInt32FloatValue $((meterModel203Block + 98)) $scale) varh"
+    echo "TotVArhExpQ4PhB: $(GetScaledUInt32FloatValue $((meterModel203Block + 100)) $scale) varh"
+    echo "TotVArhExpQ4PhC: $(GetScaledUInt32FloatValue $((meterModel203Block + 102)) $scale) varh"
+
+    echo "Evt          : $(GetMeterErrorState $((meterModel203Block + 105)))"
 }
 
 # IsBulkAvailable
@@ -393,6 +541,9 @@ function ReadInverterID103() {
 # echo $(GetModBusValue $((invModel103Block + 6)) 54)
 # ClearBulkData
 
-ReadInverterID103
 ReadInverterCommonData
 ReadMeterCommonData
+echo ""
+ReadInverterID103
+echo ""
+ReadMeterID203

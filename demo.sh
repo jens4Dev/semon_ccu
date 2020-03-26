@@ -136,13 +136,13 @@ function GetStringRegister() {
 
     for ii in ${!vals[@]}; do
         val1=${vals[ii]}
-        if [ $val1 -gt 0 ]; then
+        if (( $val1 > 0 )); then
             val2=$(($val1 / 256))
-            if [ $val2 -gt 0 ]; then
+            if (( val2 > 0 )); then
                 output=$output$(chr $val2)
             fi
             val2=$(($val1 % 256))
-            if [ $val2 -gt 0 ]; then
+            if (( val2 > 0 )); then
                 output=$output$(chr $val2)
             fi
         fi
@@ -175,7 +175,7 @@ function GetScaledUInt32FloatValue() {
     if [ $scale -lt 0 -a $val -gt 0 ]; then
         local valLen=${#val}
         local sepPos=$(($valLen + $scale))
-        if [ $sepPos -eq 0 ]; then 
+        if (( sepPos -eq 0 )); then 
             echo "0$DECSEPERATOR${val:$sepPos}"
         else
             echo "${val:0:$sepPos}$DECSEPERATOR${val:$sepPos}"
@@ -200,7 +200,7 @@ function GetScaledUInt16FloatValue() {
     if [ $scale -lt  0 -a $val -gt 0 ]; then
         local valLen=${#val}
         local sepPos=$(($valLen + $scale))
-        if [ $sepPos -eq 0 ]; then 
+        if (( sepPos == 0 )); then 
             echo "0$DECSEPERATOR${val:$sepPos}"
         else
             echo "${val:0:$sepPos}$DECSEPERATOR${val:$sepPos}"
@@ -322,7 +322,7 @@ function ReadMeterCommonData() {
     meterData_Vr=$(GetStringRegister $(($meterCommonBlock + 42)) 8)
     meterData_SN=$(GetStringRegister $(($meterCommonBlock + 50)) 16)
     meterData_DA=$(GetUInt16Register $(($meterCommonBlock + 66)))
-    if ((debug)); then
+    if (( debug )); then
         echo "ID : $meterData_ID"
         echo "L  : $meterData_L"
         echo "Mn : $meterData_Mn"
@@ -346,7 +346,7 @@ function ReadInverterID103() {
     ReadBulkData $invModel103Block 50
 
     val=$(GetUInt16Register $((invModel103Block + 0)))
-    if [ $val -eq 103 ]; then
+    if (( val == 103 )); then
         if ((debug)); then 
             echo "ID     : $val (matched)"
         fi
@@ -355,7 +355,7 @@ function ReadInverterID103() {
         return $RETURN_FAILURE
     fi
     val=$(GetUInt16Register $((invModel103Block + 1)))
-    if [ $val -eq 50 ]; then
+    if (( val == 50 )); then
         if ((debug)); then 
             echo "L      : $val (matched)"
         fi
@@ -415,7 +415,7 @@ function ReadInverterID103() {
     inverterData_StVnd="$(GetUInt16Register $((invModel103Block + 39)))"
     inverterData_Evt1="$(GetInverterErrorState $((invModel103Block + 40)))" 
 
-    if ((debug)); then
+    if (( debug )); then
         echo "A      : $inverterData_A"
         echo "AphA   : $inverterData_AphA"
         echo "AphB   : $inverterData_AphB"
@@ -454,7 +454,7 @@ function ReadMeterID203() {
     ReadBulkData $meterModel203Block 50
 
     val=$(GetUInt16Register $((meterModel203Block + 0)))
-    if [ $val -eq 203 ]; then
+    if (( val == 203 )); then
         if ((debug)); then
             echo "ID           : $val (matched)"
         fi
@@ -463,7 +463,7 @@ function ReadMeterID203() {
         return $RETURN_FAILURE
     fi
     val=$(GetUInt16Register $((meterModel203Block + 1)))
-    if [ $val -eq 105 ]; then
+    if (( val == 105 )); then
         if ((debug)); then
             echo "L            : $val (matched)"
         fi
@@ -556,7 +556,7 @@ function ReadMeterID203() {
 
     meterData_Evt="$(GetMeterErrorState $((meterModel203Block + 105)))"
 
-    if ((debug)); then
+    if (( debug )); then
         echo "A            : $meterData_A"
         echo "AphA         : $meterData_AphA"
         echo "AphB         : $meterData_AphB"

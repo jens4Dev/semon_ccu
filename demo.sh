@@ -337,14 +337,11 @@ function ReadMeterCommonData() {
     return $RETURN_SUCCESS
 }
 
-function ReadInverterID103() {
-    # Check if we're on the right ID..
+function ReadInverterGeneralStatus() {
     local val
     local scale
 
-    # Use bulk read - Get-funcs use this automatically
-    ReadBulkData $invModel103Block 50
-
+    # Check if we're on the right ID..
     val=$(GetUInt16Register $((invModel103Block + 0)))
     if (( val == 103 )); then
         if ((debug)); then 
@@ -363,6 +360,68 @@ function ReadInverterID103() {
         echo "L      : $val (UNMATCHED - expected 50)"
         return $RETURN_FAILURE
     fi
+
+    scale=$(GetScaleFactor $((invModel103Block + 37)))
+    #inverterData_TmpCab="$(GetScaledUInt16FloatValue $((invModel103Block + 33)) $scale) °C"   # mandatory but obviously not used..
+    inverterData_TmpSnk="$(GetScaledUInt16FloatValue $((invModel103Block + 34)) $scale) °C"    # optional but filled
+    #inverterData_TmpTrns="$(GetScaledUInt16FloatValue $((invModel103Block + 35)) $scale) °C"  # seems unused
+    #inverterData_TmpOt="$(GetScaledUInt16FloatValue $((invModel103Block + 36)) $scale) °C"    # seems unused
+
+    inverterData_St="$(GetInverterOperatingState $((invModel103Block + 38)))"
+    inverterData_StVnd="$(GetUInt16Register $((invModel103Block + 39)))"
+    inverterData_Evt1="$(GetInverterErrorState $((invModel103Block + 40)))" 
+
+    if (( debug )); then
+        echo "TmpSnk : $inverterData_TmpSnk"
+        echo "St     : $inverterData_St"
+        echo "StVnd  : $inverterData_StVnd"
+        echo "Evt1   : $inverterData_Evt1"
+    fi
+}
+
+function ReadInverterBaseData() {
+    local val
+    local scale
+
+    scale=$(GetScaleFactor $((invModel103Block + 6)))
+    inverterData_A="$(GetScaledUInt16FloatValue $((invModel103Block + 2)) $scale) A"
+    inverterData_AphA="$(GetScaledUInt16FloatValue $((invModel103Block + 3)) $scale) A"
+    inverterData_AphB="$(GetScaledUInt16FloatValue $((invModel103Block + 4)) $scale) A"
+    inverterData_AphC="$(GetScaledUInt16FloatValue $((invModel103Block + 5)) $scale) A"
+
+    scale=$(GetScaleFactor $((invModel103Block + 15)))
+    inverterData_W="$(GetScaledUInt16FloatValue $((invModel103Block + 14)) $scale) W"
+
+    scale=$(GetScaleFactor $((invModel103Block + 26)))
+    inverterData_WH="$(GetScaledUInt32FloatValue $((invModel103Block + 24)) $scale) Wh"
+
+    scale=$(GetScaleFactor $((invModel103Block + 28)))
+    inverterData_DCA="$(GetScaledUInt16FloatValue $((invModel103Block + 27)) $scale) A"
+
+    scale=$(GetScaleFactor $((invModel103Block + 30)))
+    inverterData_DCV="$(GetScaledUInt16FloatValue $((invModel103Block + 29)) $scale) V"
+
+    scale=$(GetScaleFactor $((invModel103Block + 32)))
+    inverterData_DCW="$(GetScaledUInt16FloatValue $((invModel103Block + 31)) $scale) W"
+
+    if (( debug )); then
+        echo "A      : $inverterData_A"
+        echo "AphA   : $inverterData_AphA"
+        echo "AphB   : $inverterData_AphB"
+        echo "AphC   : $inverterData_AphC"
+        echo "W      : $inverterData_W"
+        echo "WH     : $inverterData_WH"
+        echo "DCA    : $inverterData_DCA"
+        echo "DCV    : $inverterData_DCV"
+        echo "DCW    : $inverterData_DCW"
+    fi
+
+    return $RETURN_SUCCESS
+}
+
+function ReadInverterFullData() {
+    local val
+    local scale
 
     scale=$(GetScaleFactor $((invModel103Block + 6)))
     inverterData_A="$(GetScaledUInt16FloatValue $((invModel103Block + 2)) $scale) A"
@@ -405,16 +464,6 @@ function ReadInverterID103() {
     scale=$(GetScaleFactor $((invModel103Block + 32)))
     inverterData_DCW="$(GetScaledUInt16FloatValue $((invModel103Block + 31)) $scale) W"
 
-    scale=$(GetScaleFactor $((invModel103Block + 37)))
-    #inverterData_TmpCab="$(GetScaledUInt16FloatValue $((invModel103Block + 33)) $scale) °C"   # mandatory but obviously not used..
-    inverterData_TmpSnk="$(GetScaledUInt16FloatValue $((invModel103Block + 34)) $scale) °C"    # optional but filled
-    #inverterData_TmpTrns="$(GetScaledUInt16FloatValue $((invModel103Block + 35)) $scale) °C"  # seems unused
-    #inverterData_TmpOt="$(GetScaledUInt16FloatValue $((invModel103Block + 36)) $scale) °C"    # seems unused
-
-    inverterData_St="$(GetInverterOperatingState $((invModel103Block + 38)))"
-    inverterData_StVnd="$(GetUInt16Register $((invModel103Block + 39)))"
-    inverterData_Evt1="$(GetInverterErrorState $((invModel103Block + 40)))" 
-
     if (( debug )); then
         echo "A      : $inverterData_A"
         echo "AphA   : $inverterData_AphA"
@@ -435,24 +484,61 @@ function ReadInverterID103() {
         echo "DCA    : $inverterData_DCA"
         echo "DCV    : $inverterData_DCV"
         echo "DCW    : $inverterData_DCW"
-        echo "TmpSnk : $inverterData_TmpSnk"
-        echo "St     : $inverterData_St"
-        echo "StVnd  : $inverterData_StVnd"
-        echo "Evt1   : $inverterData_Evt1"
     fi
-    ClearBulkData
 
     return $RETURN_SUCCESS
 }
 
-function ReadMeterID203() {
-    # Check if we're on the right ID..
+function ReadMeterBaseData() {
     local val
     local scale
 
-    # Use bulk read - Get-funcs use this automatically
-    ReadBulkData $meterModel203Block 50
+    scale=$(GetScaleFactor $((meterModel203Block + 6)))
+    meterData_A="$(GetScaledUInt16FloatValue $((meterModel203Block + 2)) $scale) A"
 
+    scale=$(GetScaleFactor $((meterModel203Block + 15)))
+    meterData_PhV="$(GetScaledUInt16FloatValue $((meterModel203Block + 7)) $scale) V"
+
+    scale=$(GetScaleFactor $((meterModel203Block + 22)))
+    meterData_W="$(GetScaledUInt16FloatValue $((meterModel203Block + 18)) $scale) W"
+    meterData_WphA="$(GetScaledUInt16FloatValue $((meterModel203Block + 19)) $scale) W"
+    meterData_WphB="$(GetScaledUInt16FloatValue $((meterModel203Block + 20)) $scale) W"
+    meterData_WphC="$(GetScaledUInt16FloatValue $((meterModel203Block + 21)) $scale) W"
+
+    scale=$(GetScaleFactor $((meterModel203Block + 54)))
+    meterData_TotWhExp="$(GetScaledUInt32FloatValue $((meterModel203Block + 38)) $scale) Wh"
+    meterData_TotWhExpPhA="$(GetScaledUInt32FloatValue $((meterModel203Block + 40)) $scale) Wh"
+    meterData_TotWhExpPhB="$(GetScaledUInt32FloatValue $((meterModel203Block + 42)) $scale) Wh"
+    meterData_TotWhExpPnC="$(GetScaledUInt32FloatValue $((meterModel203Block + 44)) $scale) Wh"
+    meterData_TotWhImp="$(GetScaledUInt32FloatValue $((meterModel203Block + 46)) $scale) Wh"
+    meterData_TotWhImpPhA="$(GetScaledUInt32FloatValue $((meterModel203Block + 48)) $scale) Wh"
+    meterData_TotWhImpPhB="$(GetScaledUInt32FloatValue $((meterModel203Block + 50)) $scale) Wh"
+    meterData_TotWhImpPnC="$(GetScaledUInt32FloatValue $((meterModel203Block + 52)) $scale) Wh"
+
+    if (( debug )); then
+        echo "A            : $meterData_A"
+        echo "PhV          : $meterData_PhV"
+        echo "W            : $meterData_W"
+        echo "WphA         : $meterData_WphA"
+        echo "WphB         : $meterData_WphB"
+        echo "WphC         : $meterData_WphC"
+        echo "TotWhExp     : $meterData_TotWhExp"
+        echo "TotWhExpPhA  : $meterData_TotWhExpPhA"
+        echo "TotWhExpPhB  : $meterData_TotWhExpPhB"
+        echo "TotWhExpPnC  : $meterData_TotWhExpPnC"
+        echo "TotWhImp     : $meterData_TotWhImp"
+        echo "TotWhImpPhA  : $meterData_TotWhImpPhA"
+        echo "TotWhImpPhB  : $meterData_TotWhImpPhB"
+        echo "TotWhImpPnC  : $meterData_TotWhImpPnC"
+    fi
+
+}
+
+function ReadMeterGeneralStatus() {
+    local val
+    local scale
+
+    # Check if we're on the right ID..
     val=$(GetUInt16Register $((meterModel203Block + 0)))
     if (( val == 203 )); then
         if ((debug)); then
@@ -471,6 +557,17 @@ function ReadMeterID203() {
         echo "L            : $val (UNMATCHED - expected 50)"
         return $RETURN_FAILURE
     fi
+
+    meterData_Evt="$(GetMeterErrorState $((meterModel203Block + 105)))"
+
+    if (( debug )); then
+        echo "Evt          : $meterData_Evt"
+    fi
+}
+
+function ReadMeterFullData() {
+    local val
+    local scale
 
     scale=$(GetScaleFactor $((meterModel203Block + 6)))
     meterData_A="$(GetScaledUInt16FloatValue $((meterModel203Block + 2)) $scale) A"
@@ -554,8 +651,6 @@ function ReadMeterID203() {
     # echo "TotVArhExpQ4PhB: $(GetScaledUInt32FloatValue $((meterModel203Block + 100)) $scale) varh"
     # echo "TotVArhExpQ4PhC: $(GetScaledUInt32FloatValue $((meterModel203Block + 102)) $scale) varh"
 
-    meterData_Evt="$(GetMeterErrorState $((meterModel203Block + 105)))"
-
     if (( debug )); then
         echo "A            : $meterData_A"
         echo "AphA         : $meterData_AphA"
@@ -594,10 +689,8 @@ function ReadMeterID203() {
         echo "TotWhImpPhA  : $meterData_TotWhImpPhA"
         echo "TotWhImpPhB  : $meterData_TotWhImpPhB"
         echo "TotWhImpPnC  : $meterData_TotWhImpPnC"
-        echo "Evt          : $meterData_Evt"
     fi
 
-    ClearBulkData
 }
 
 # IsBulkAvailable
@@ -629,9 +722,17 @@ function ReadMeterID203() {
 # echo $(GetModBusValue $((invModel103Block + 6)) 54)
 # ClearBulkData
 
-ReadInverterCommonData
-ReadMeterCommonData
+#ReadInverterCommonData
+#ReadMeterCommonData
 echo "Start Inverter"
-ReadInverterID103
+ReadBulkData $invModel103Block 50
+ReadInverterBaseData
+#ReadInverterGeneralStatus
+#ReadInverterFullData
+ClearBulkData
 echo "Start Meter"
-ReadMeterID203
+ReadBulkData $meterModel203Block 50
+ReadMeterBaseData
+#ReadMeterGeneralStatus
+#ReadMeterFullData
+ClearBulkData

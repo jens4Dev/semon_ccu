@@ -23,8 +23,18 @@ My SE5K is using SunSpec mapping 103, the meter 203.
 * modbus-scripts depends on hard coded path /usr/local/addons/modbus/
 
 ### Links
-* [https://www.solaredge.com/sites/default/files/sunspec-implementation-technical-note-de.pdf](Technical Note SunSpec-Implementation)
+* [https://www.solaredge.com/sites/default/files/sunspec-implementation-technical-note-de.pdf](SolarEdge Technical Note SunSpec-Implementation)
 * [https://sunspec.org/wp-content/uploads/2019/10/SunSpecInformationModelReference20170928.xlsx](SunSpec Register Mapping)
 
 #### Other SunSpec / SE-Monitoring Solutions
 * [https://github.com/tjko/sunspec-monitor](SunSpec-Monitor), Perl-based
+
+CCU2 with discrete var:
+real    0m 17.72s
+user    0m 3.59s
+sys     0m 5.78s
+
+CCU2 with ANSI & some (()) for if:
+real    0m 14.21s
+user    0m 3.47s
+sys     0m 6.10s

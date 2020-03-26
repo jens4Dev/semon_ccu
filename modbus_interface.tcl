@@ -29,7 +29,7 @@ if { $argc != 6 } {
 # Modus TCP (allways!)
 
 # Include Bibliothek
-source /usr/local/addons/modbus/modbus.tcl
+source /usr/local/addons/semon_ccu/modbus.tcl
 
 # Send configuration
 ::modbus::configure -mode "TCP" -ip "[lindex $argv 0]" -port "[lindex $argv 1]"

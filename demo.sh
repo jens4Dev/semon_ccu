@@ -18,7 +18,7 @@ else
     debug=1    # 1 debug active
 fi
 
-callModBus="tclsh /usr/local/addons/modbus/modbus_interface.tcl $inverterIP $inverterModBusPort 1 03" # fiex on ID 1 & Read
+callModBus="tclsh /usr/local/addons/semon_ccu/modbus_interface.tcl $inverterIP $inverterModBusPort 1 03" # fiex on ID 1 & Read
 
 invCommonBlock=40000
 invModel103Block=40069

@@ -29,7 +29,7 @@ if { $argc != 6 } {
 # Modus TCP (always!)
 
 # Include lib - must in same dir as this script
-set script_path [ file dirname [ file normalize [ info script ] ] ]
+set script_path [ file dirname [ info script ] ]
 source $script_path/modbus.tcl
 
 # Send configuration

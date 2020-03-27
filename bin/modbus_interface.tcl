@@ -4,7 +4,7 @@ exec tclsh "$0" ${1+"$@"}
 
 if { $argc != 6 } {
   puts ""
-  puts "The modbus_interface.tcl script requires 6 numbers to be inputed."
+  puts "The modbus_interface.tcl script requires 6 numbers to be given."
   puts "(IP, Port, Device, Function, Register no, length of answer) for function read."
   puts "For example: 192.168.178.35 502 255 03 529 1"
   puts "or"
@@ -26,10 +26,11 @@ if { $argc != 6 } {
   exit
 }
 
-# Modus TCP (allways!)
+# Modus TCP (always!)
 
-# Include Bibliothek
-source /usr/local/addons/semon_ccu/bin/modbus.tcl
+# Include lib - must in same dir as this script
+set script_path [ file dirname [ file normalize [ info script ] ] ]
+source $script_path/modbus.tcl
 
 # Send configuration
 ::modbus::configure -mode "TCP" -ip "[lindex $argv 0]" -port "[lindex $argv 1]"

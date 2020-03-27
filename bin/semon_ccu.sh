@@ -7,6 +7,7 @@ VERSION="0.1"
 VERSION_DATE="Mar 26 2020"
 
 DECSEPERATOR=.
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 
 #####################################################
 # Main script starts here, dont modify from here on

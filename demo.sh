@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/bash
 #
 
 # Experimente...
@@ -8,6 +8,7 @@ RETURN_FAILURE=1
 RETURN_SUCCESS=0
 
 DECSEPERATOR=.
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )/bin"
 
 # Settings
 SE_INVERTER_IP="192.168.30.45"

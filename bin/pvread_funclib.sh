@@ -1,4 +1,4 @@
-callModBus="tclsh /usr/local/addons/semon_ccu/bin/modbus_interface.tcl $SE_INVERTER_IP $SE_INVERTER_MODBUS_PORT 1 03" # fiex on ID 1 & Read
+callModBus="tclsh $DIR/modbus_interface.tcl $SE_INVERTER_IP $SE_INVERTER_MODBUS_PORT 1 03" # fix on ID 1 & Read
 
 invCommonBlock=40000
 invModel103Block=40069

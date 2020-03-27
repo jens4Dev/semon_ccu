@@ -19,7 +19,7 @@ else
     debug=1    # 1 debug active
 fi
 
-source "pvread_funclib.sh"
+source "bin/pvread_funclib.sh"
 
 function PrintInverterCommonData() {
     if (( debug )); then

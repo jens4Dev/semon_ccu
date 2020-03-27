@@ -26,7 +26,7 @@ ADDON_DIR=.
 
 # set settings - they override config-setting
 export SE_PROCESSLOG_FILE=
-export CONFIG_FILE="${ADDON_DIR}/semon_ccu.conf"
+export CONFIG_FILE="${ADDON_DIR}/etc/semon_ccu.conf"
 
 # the interval settings can be specified on the command-line
 if [ $# -gt 0 ]; then
@@ -46,4 +46,4 @@ fi
 # execute semon_ccu in non-daemon mode
 export PATH="${ADDON_DIR}/bin:${PATH}"
 export LD_LIBRARY_PATH="${ADDON_DIR}/bin:${LD_LIBRARY_PATH}"
-${ADDON_DIR}/semon_ccu.sh #>/dev/null 2>&1
+${ADDON_DIR}/bin/semon_ccu.sh #>/dev/null 2>&1

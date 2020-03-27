@@ -2,6 +2,26 @@
 This software was developed for our private PV device using a SolarEdge SE5K inverter in combination a with Modbus Meter WattNode SE-WND-3Y-400-MB. The meter is connected to the inverter via a separate RS485-bus. 
 The inverter is connected to the LAN and with the ModBus TCP protocol you read lots of parameters from both the inverter as well as the meter. 
 
+### Meter and Inverter AC-schema
+```
+                                                                              XX
+                          +----------------+                                 XXXX
+                          |                |                                XX  XX
++---------------+         |    Consumer    |     +------------------+     XX Grid XX
+|               |         |                |     |                  |          +
+|               |         +-------+--------+     |                  | V        |
+|   Inverter    |                 |          +---+  Wattnode-Meter  +--+       |
+|               |                 |          | A |                  |  |       |
+|               |                 |          |   |                  |  |       |
++-------+-------+                 |          |   +------------------+  |       |
+        |                         |          |                         |       |
+        |                         |          |                         |       |
+        |                         |        +---+                       |       |
+        +-------------------------+------------------------------------+-------+
+                                           +---+
+                                          CT-Sensor
+```
+
 ### Detailed description
 With this project I'm monitoring the data of both units with my eq3 / HomeMatic CCU2 (yeah, the old one ;-)). The data is read in short intervalls with a bash-based daemon and written to the data logs of CUxD. A couple of values are also written to system variables to be shown in the WebUI of the CCU and via XML-API / home24 app.
 When you change the way of writing the data, it should be usable for other logging sinks too.

@@ -25,7 +25,7 @@ The inverter is connected to the LAN and with the ModBus TCP protocol you read l
 ### Detailed description
 With this project I'm monitoring the data of both units with my eq3 / HomeMatic CCU2 (yeah, the old one ;-)). The data is read in short intervalls with a bash-based daemon and written to the data logs of CUxD. A couple of values are also written to system variables to be shown in the WebUI of the CCU and via XML-API / home24 app.
 When you change the way of writing the data, it should be usable for other logging sinks too.
-Why Bash? Bash isn't very handy compared to modern scripting language, yes, but - see above - it should run on the HomeMatic CCU...
+Why all Bash? Bash isn't very handy compared to other scripting language, yes. Understood more in tcl after finished pvread_funclib.sh - maybe doing more in tcl would have been the better approach.. And jens-maus created this nice deamon-bash. 
 
 ### Contributions
 * Thanks to jens-maus for his great [hm_pdetect](https://github.com/jens-maus/hm_pdetect) - it's the base for the bash script and installation on the CCU...

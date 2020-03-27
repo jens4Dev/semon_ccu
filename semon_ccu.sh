@@ -6,6 +6,8 @@
 VERSION="0.1"
 VERSION_DATE="Mar 26 2020"
 
+DECSEPERATOR=.
+
 #####################################################
 # Main script starts here, dont modify from here on
 
@@ -339,25 +341,8 @@ function whichEnumID()
   echo ${result}
 }
 
-function run_semon()
-{
-  local res
-
-  # output time/date of execution
-  echo "== $(date) ==================================="
-
-  # lets retrieve all mac<>ip addresses of currently
-  # active devices in our network
-  echo -n "Querying SolarEdge device:"
-  echo -n " ${SE_INVERTER_IP}:${SE_INVERTER_MODBUS_PORT}"
-  echo ""
-
-  ReadInverterCommonData
-  if [[ ${res} -ne $RETURN_SUCCESS ]]; then
-    echo "ERROR: couldn't connect to the specified inverter!"
-    return ${RETURN_FAILURE}
-  fi 
-  echo "Inverter:"
+function ProcessCommonData() {
+  echo "Found Inverter:"
   echo " ID : $inverterData_ID"
   echo " DID: $inverterData_DID"
   echo " L  : $inverterData_L"
@@ -368,8 +353,7 @@ function run_semon()
   echo " SN : $inverterData_SN"
   echo " DA : $inverterData_DA"
 
-  ReadMeterCommonData
-  echo "Meter:"
+  echo "Found Meter:"
   echo " ID : $meterData_ID"
   echo " L  : $meterData_L"
   echo " Mn : $meterData_Mn"
@@ -378,11 +362,173 @@ function run_semon()
   echo " Vr : $meterData_Vr"
   echo " SN : $meterData_SN"
   echo " DA : $meterData_DA"
+}
+
+function ProcessGeneralStatus() {
+  echo "Status Inverter:"
+  echo " TmpSnk      : $inverterData_TmpSnk"
+  echo " St          : $inverterData_St"
+  echo " StVnd       : $inverterData_StVnd"
+  echo " Evt1        : $inverterData_Evt1"
+  echo "Status Meter:"
+  echo " Evt         : $meterData_Evt"
+}
+
+function ProcessBaseData() {
+  echo "Measurements Inverter:"
+  echo " A          : $inverterData_A"
+  echo " AphA       : $inverterData_AphA"
+  echo " AphB       : $inverterData_AphB"
+  echo " AphC       : $inverterData_AphC"
+  echo " W          : $inverterData_W"
+  echo " WH         : $inverterData_WH"
+  echo " DCA        : $inverterData_DCA"
+  echo " DCV        : $inverterData_DCV"
+  echo " DCW        : $inverterData_DCW"
+  echo "Measurements Meter:"
+  echo " A          : $meterData_A"
+  echo " PhV        : $meterData_PhV"
+  echo " W          : $meterData_W"
+  echo " WphA       : $meterData_WphA"
+  echo " WphB       : $meterData_WphB"
+  echo " WphC       : $meterData_WphC"
+  echo " TotWhExp   : $meterData_TotWhExp"
+  echo " TotWhExpPhA: $meterData_TotWhExpPhA"
+  echo " TotWhExpPhB: $meterData_TotWhExpPhB"
+  echo " TotWhExpPnC: $meterData_TotWhExpPnC"
+  echo " TotWhImp   : $meterData_TotWhImp"
+  echo " TotWhImpPhA: $meterData_TotWhImpPhA"
+  echo " TotWhImpPhB: $meterData_TotWhImpPhB"
+  echo " TotWhImpPnC: $meterData_TotWhImpPnC"
+}
+
+function ProcessFullData() {
+  echo "Measurements Inverter:"
+  echo " A          : $inverterData_A"
+  echo " AphA       : $inverterData_AphA"
+  echo " AphB       : $inverterData_AphB"
+  echo " AphC       : $inverterData_AphC"
+  echo " PPVphAB    : $inverterData_PPVphAB"
+  echo " PPVphBC    : $inverterData_PPVphBC"
+  echo " PPVphCA    : $inverterData_PPVphCA"
+  echo " PPVphA     : $inverterData_PPVphA"
+  echo " PPVphB     : $inverterData_PPVphB"
+  echo " PPVphC     : $inverterData_PPVphC"
+  echo " W          : $inverterData_W"
+  echo " Hz         : $inverterData_Hz"
+  echo " VA         : $inverterData_VA"
+  echo " VAr        : $inverterData_VAr"
+  echo " PF         : $inverterData_PF"
+  echo " WH         : $inverterData_WH"
+  echo " DCA        : $inverterData_DCA"
+  echo " DCV        : $inverterData_DCV"
+  echo " DCW        : $inverterData_DCW"
+  echo "Measurements Meter:"
+  echo " A          : $meterData_A"
+  echo " AphA       : $meterData_AphA"
+  echo " AphB       : $meterData_AphB"
+  echo " AphC       : $meterData_AphC"
+  echo " PhV        : $meterData_PhV"
+  echo " PhVphA     : $meterData_PhVphA"
+  echo " PhVphB     : $meterData_PhVphB"
+  echo " PVphC      : $meterData_PVphC"
+  echo " PPV        : $meterData_PPV"
+  echo " PhVphAB    : $meterData_PhVphAB"
+  echo " PhVphBC    : $meterData_PhVphBC"
+  echo " PhVphCA    : $meterData_PhVphCA"
+  echo " Hz         : $meterData_Hz"
+  echo " W          : $meterData_W"
+  echo " WphA       : $meterData_WphA"
+  echo " WphB       : $meterData_WphB"
+  echo " WphC       : $meterData_WphC"
+  echo " VA         : $meterData_VA"
+  echo " VAphA      : $meterData_VAphA"
+  echo " VAphB      : $meterData_VAphB"
+  echo " VAphC      : $meterData_VAphC"
+  echo " VAR        : $meterData_VAR"
+  echo " VARphA     : $meterData_VARphA"
+  echo " VARphB     : $meterData_VARphB"
+  echo " VARphC     : $meterData_VARphC"
+  echo " PF         : $meterData_PF"
+  echo " PFphA      : $meterData_PFphA"
+  echo " PFphB      : $meterData_PFphB"
+  echo " PFphC      : $meterData_PFphC"
+  echo " TotWhExp   : $meterData_TotWhExp"
+  echo " TotWhExpPhA: $meterData_TotWhExpPhA"
+  echo " TotWhExpPhB: $meterData_TotWhExpPhB"
+  echo " TotWhExpPnC: $meterData_TotWhExpPnC"
+  echo " TotWhImp   : $meterData_TotWhImp"
+  echo " TotWhImpPhA: $meterData_TotWhImpPhA"
+  echo " TotWhImpPhB: $meterData_TotWhImpPhB"
+  echo " TotWhImpPnC: $meterData_TotWhImpPnC" 
+}
+
+# runs initial action only once at startup
+function initial_action() {
+  local res
+
+  # output time/date of execution
+  echo "== $(date) ==================================="
+
+  # lets retrieve all mac<>ip addresses of currently
+  # active devices in our network
+  echo -n "Querying SolarEdge device:"
+  echo -n " ${SE_INVERTER_IP}:${SE_INVERTER_MODBUS_PORT}"
+  echo
+
+  # Initial read of common data
+  ReadInverterCommonData
+  if [[ ${res} -ne $RETURN_SUCCESS ]]; then
+    echo "ERROR: couldn't connect to the specified inverter!"
+    return ${RETURN_FAILURE}
+  fi 
+  ReadMeterCommonData
+  ProcessCommonData
+  echo
+}
+
+function run_semon()
+{
+  local res
+
+  # output time/date of execution
+  echo "== $(date) ==================================="
+
+  # Collecting data
+  ReadBulkDataInverter
+  if [ "$SM_READ_STATUS" == "true" ]; then
+    ReadInverterGeneralStatus
+  fi
+  if [ "$SM_READ_FULL_DATA" == "true" ]; then
+    ReadInverterFullData
+  else
+    ReadInverterBaseData
+  fi
+  ClearBulkData
+
+  ReadBulkDataMeter
+  if [ "$SM_READ_STATUS" == "true" ]; then
+    ReadMeterGeneralStatus
+  fi
+  if [ "$SM_READ_FULL_DATA" == "true" ]; then
+    ReadMeterFullData
+  else
+    ReadMeterBaseData
+  fi
+  ClearBulkData
+
+  # Process the data
+  if [ "$SM_READ_STATUS" == "true" ]; then
+    ProcessGeneralStatus
+  fi
+  if [ "$SM_READ_FULL_DATA" == "true" ]; then
+    ProcessFullData
+  else
+    ProcessBaseData
+  fi
 
   # output some statistics
   echo
-  echo " Normal-WiFi/LAN devices active: ${#normalDeviceList[@]}"
-  echo " Guest-WiFi/LAN devices active: ${#guestDeviceList[@]}"
   
   echo "== $(date) ==================================="
   echo
@@ -396,6 +542,8 @@ function run_semon()
 echo "semon_ccu ${VERSION} - a CCU-based SolarEdge PV-Datalogger"
 echo "(${VERSION_DATE}) (c) jensDev <jensDev@t-online.de> - based on hm_pdetect https://github.com/jens-maus/hm_pdetect"
 echo
+
+initial_action
 
 # lets enter an endless loop to implement a
 # daemon-like behaviour

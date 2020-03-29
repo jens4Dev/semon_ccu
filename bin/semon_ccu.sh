@@ -48,9 +48,6 @@ SE_CCU_VARS=${SE_CCU_VARS:-"([WR_Leistung_W]=inverterData_W [ME_Wh_export]=meter
 # Level of variables read via ModBus
 SM_READ_FULL_DATA=${SM_READ_FULL_DATA:-false}
 
-# Read device status
-SM_READ_STATUS=${SM_READ_STATUS:-true}
-
 # where to save the process ID in case hm_pdetect runs as
 # a daemon
 SE_DAEMON_PIDFILE=${SE_DAEMON_PIDFILE:-"/var/run/semon_ccu.pid"}
@@ -89,7 +86,8 @@ if [[ ! -x $(which wget) ]]; then
 fi
 
 # declare all associative arrays first (bash v4+ required)
-declare -A HM_USER_LIST     # username<>MAC/IP tuple
+declare -A SE_CCU_VARS
+declare -A SE_LOGIT_VARS
 
 ###############################
 # lets check if config file was specified as a cmdline arg
@@ -272,7 +270,14 @@ function createVariable()
       echo -n "  Creating CCU variable '${vaname}' (${vatype})... "
       postbody="string v='${vaname}';boolean f=true;string i;foreach(i,dom.GetObject(ID_SYSTEM_VARIABLES).EnumUsedIDs()){if(v==dom.GetObject(i).Name()){f=false;}};if(f){object s=dom.GetObject(ID_SYSTEM_VARIABLES);object n=dom.CreateObject(OT_VARDP);n.Name(v);s.Add(n.ID());n.ValueType(ivtString);n.ValueSubType(istChar8859);n.DPInfo('${comment}');n.State('');dom.RTUpdate(false);}"
     fi
-  else # vatype == Bool - fixed "true" / "false" as values for true / false
+  elif [[ ${vatype} == "float" ]]; then
+    getVariableState "${vaname}" >/dev/null
+    if [[ $? -eq 1 ]]; then
+      echo -n "  Creating CCU variable '${vaname}' (${vatype})... "
+      postbody="string v='${vaname}';boolean f=true;string i;foreach(i,dom.GetObject(ID_SYSTEM_VARIABLES).EnumUsedIDs()){if(v==dom.GetObject(i).Name()){f=false;}};if(f){object s=dom.GetObject(ID_SYSTEM_VARIABLES);object n=dom.CreateObject(OT_VARDP);n.Name(v);s.Add(n.ID());n.ValueType(ivtFloat);n.ValueSubType(istGeneric);n.DPInfo('${comment}');n.State('');dom.RTUpdate(false);}"
+    fi
+  elif [[ ${vatype} == "bool" ]]; then
+    # vatype == Bool - fixed "true" / "false" as values for true / false
     local result=$(wget -q -O - "http://${SE_CCU_IP}:${SE_CCU_REGAPORT}/rega.exe?valueName0=dom.GetObject(ID_SYSTEM_VARIABLES).Get('${vaname}').ValueName0()&valueName1=dom.GetObject(ID_SYSTEM_VARIABLES).Get('${vaname}').ValueName1()")
     local valueName0="null"
     local valueName1="null"
@@ -298,6 +303,9 @@ function createVariable()
       echo -n "  Creating CCU variable '${vaname}' (${vatype})... "
       postbody="string v='${vaname}';boolean f=true;string i;foreach(i,dom.GetObject(ID_SYSTEM_VARIABLES).EnumUsedIDs()){if(v==dom.GetObject(i).Name()){f=false;}};if(f){object s=dom.GetObject(ID_SYSTEM_VARIABLES);object n=dom.CreateObject(OT_VARDP);n.Name(v);s.Add(n.ID());n.ValueType(ivtBinary);n.ValueSubType(istBool);n.DPInfo('${comment}');n.ValueName1('${boolTRUE}');n.ValueName0('${boolFALSE}');n.State(false);dom.RTUpdate(false);}"
     fi
+  else 
+    echo "ERROR! Unknown type ${vatype} in createVariable()!"
+    return ${RETURN_FAILURE}
   fi
 
   # if postbody is empty there is nothing to do
@@ -367,7 +375,7 @@ function ProcessCommonData() {
 
 function ProcessGeneralStatus() {
   echo "Status Inverter:"
-  echo " TmpSnk      : $inverterData_TmpSnk"
+  echo " TmpSnk      : $inverterData_TmpSnk__C °C"
   echo " St          : $inverterData_St"
   echo " StVnd       : $inverterData_StVnd"
   echo " Evt1        : $inverterData_Evt1"
@@ -377,91 +385,102 @@ function ProcessGeneralStatus() {
 
 function ProcessBaseData() {
   echo "Measurements Inverter:"
-  echo " A          : $inverterData_A"
-  echo " AphA       : $inverterData_AphA"
-  echo " AphB       : $inverterData_AphB"
-  echo " AphC       : $inverterData_AphC"
-  echo " W          : $inverterData_W"
-  echo " WH         : $inverterData_WH"
-  echo " DCA        : $inverterData_DCA"
-  echo " DCV        : $inverterData_DCV"
-  echo " DCW        : $inverterData_DCW"
+  echo " A          : $inverterData_A__A A"
+  echo " AphA       : $inverterData_AphA__A A"
+  echo " AphB       : $inverterData_AphB__A A"
+  echo " AphC       : $inverterData_AphC__A A"
+  echo " W          : $inverterData_W__W W"
+  echo " WH         : $inverterData_WH__Wh Wh"
+  echo " DCA        : $inverterData_DCA__A A"
+  echo " DCV        : $inverterData_DCV__V V"
+  echo " DCW        : $inverterData_DCW__W W"
   echo "Measurements Meter:"
-  echo " A          : $meterData_A"
-  echo " PhV        : $meterData_PhV"
-  echo " W          : $meterData_W"
-  echo " WphA       : $meterData_WphA"
-  echo " WphB       : $meterData_WphB"
-  echo " WphC       : $meterData_WphC"
-  echo " TotWhExp   : $meterData_TotWhExp"
-  echo " TotWhExpPhA: $meterData_TotWhExpPhA"
-  echo " TotWhExpPhB: $meterData_TotWhExpPhB"
-  echo " TotWhExpPnC: $meterData_TotWhExpPnC"
-  echo " TotWhImp   : $meterData_TotWhImp"
-  echo " TotWhImpPhA: $meterData_TotWhImpPhA"
-  echo " TotWhImpPhB: $meterData_TotWhImpPhB"
-  echo " TotWhImpPnC: $meterData_TotWhImpPnC"
+  echo " A          : $meterData_A__A A"
+  echo " PhV        : $meterData_PhV__V V"
+  echo " W          : $meterData_W__W W"
+  echo " WphA       : $meterData_WphA__W W"
+  echo " WphB       : $meterData_WphB__W W"
+  echo " WphC       : $meterData_WphC__W W"
+  echo " TotWhExp   : $meterData_TotWhExp__Wh Wh"
+  echo " TotWhExpPhA: $meterData_TotWhExpPhA__Wh Wh"
+  echo " TotWhExpPhB: $meterData_TotWhExpPhB__Wh Wh"
+  echo " TotWhExpPnC: $meterData_TotWhExpPnC__Wh Wh"
+  echo " TotWhImp   : $meterData_TotWhImp__Wh Wh"
+  echo " TotWhImpPhA: $meterData_TotWhImpPhA__Wh Wh"
+  echo " TotWhImpPhB: $meterData_TotWhImpPhB__Wh Wh"
+  echo " TotWhImpPnC: $meterData_TotWhImpPnC__Wh Wh"
 }
 
 function ProcessFullData() {
   echo "Measurements Inverter:"
-  echo " A          : $inverterData_A"
-  echo " AphA       : $inverterData_AphA"
-  echo " AphB       : $inverterData_AphB"
-  echo " AphC       : $inverterData_AphC"
-  echo " PPVphAB    : $inverterData_PPVphAB"
-  echo " PPVphBC    : $inverterData_PPVphBC"
-  echo " PPVphCA    : $inverterData_PPVphCA"
-  echo " PPVphA     : $inverterData_PPVphA"
-  echo " PPVphB     : $inverterData_PPVphB"
-  echo " PPVphC     : $inverterData_PPVphC"
-  echo " W          : $inverterData_W"
-  echo " Hz         : $inverterData_Hz"
-  echo " VA         : $inverterData_VA"
-  echo " VAr        : $inverterData_VAr"
-  echo " PF         : $inverterData_PF"
-  echo " WH         : $inverterData_WH"
-  echo " DCA        : $inverterData_DCA"
-  echo " DCV        : $inverterData_DCV"
-  echo " DCW        : $inverterData_DCW"
+  echo " A          : $inverterData_A__A A"
+  echo " AphA       : $inverterData_AphA__A A"
+  echo " AphB       : $inverterData_AphB__A A"
+  echo " AphC       : $inverterData_AphC__A A"
+  echo " PPVphAB    : $inverterData_PPVphAB__V V"
+  echo " PPVphBC    : $inverterData_PPVphBC__V V"
+  echo " PPVphCA    : $inverterData_PPVphCA__V V"
+  echo " PPVphA     : $inverterData_PPVphA__V V"
+  echo " PPVphB     : $inverterData_PPVphB__V V"
+  echo " PPVphC     : $inverterData_PPVphC__V V"
+  echo " W          : $inverterData_W__W W"
+  echo " Hz         : $inverterData_Hz__Hz Hz"
+  echo " VA         : $inverterData_VA__VA VA"
+  echo " VAr        : $inverterData_VAr__var var"
+  echo " PF         : $inverterData_PF__perct %"
+  echo " WH         : $inverterData_WH__Wh Wh"
+  echo " DCA        : $inverterData_DCA__A A"
+  echo " DCV        : $inverterData_DCV__V V"
+  echo " DCW        : $inverterData_DCW__W W"
   echo "Measurements Meter:"
-  echo " A          : $meterData_A"
-  echo " AphA       : $meterData_AphA"
-  echo " AphB       : $meterData_AphB"
-  echo " AphC       : $meterData_AphC"
-  echo " PhV        : $meterData_PhV"
-  echo " PhVphA     : $meterData_PhVphA"
-  echo " PhVphB     : $meterData_PhVphB"
-  echo " PVphC      : $meterData_PVphC"
-  echo " PPV        : $meterData_PPV"
-  echo " PhVphAB    : $meterData_PhVphAB"
-  echo " PhVphBC    : $meterData_PhVphBC"
-  echo " PhVphCA    : $meterData_PhVphCA"
-  echo " Hz         : $meterData_Hz"
-  echo " W          : $meterData_W"
-  echo " WphA       : $meterData_WphA"
-  echo " WphB       : $meterData_WphB"
-  echo " WphC       : $meterData_WphC"
-  echo " VA         : $meterData_VA"
-  echo " VAphA      : $meterData_VAphA"
-  echo " VAphB      : $meterData_VAphB"
-  echo " VAphC      : $meterData_VAphC"
-  echo " VAR        : $meterData_VAR"
-  echo " VARphA     : $meterData_VARphA"
-  echo " VARphB     : $meterData_VARphB"
-  echo " VARphC     : $meterData_VARphC"
-  echo " PF         : $meterData_PF"
-  echo " PFphA      : $meterData_PFphA"
-  echo " PFphB      : $meterData_PFphB"
-  echo " PFphC      : $meterData_PFphC"
-  echo " TotWhExp   : $meterData_TotWhExp"
-  echo " TotWhExpPhA: $meterData_TotWhExpPhA"
-  echo " TotWhExpPhB: $meterData_TotWhExpPhB"
-  echo " TotWhExpPnC: $meterData_TotWhExpPnC"
-  echo " TotWhImp   : $meterData_TotWhImp"
-  echo " TotWhImpPhA: $meterData_TotWhImpPhA"
-  echo " TotWhImpPhB: $meterData_TotWhImpPhB"
-  echo " TotWhImpPnC: $meterData_TotWhImpPnC" 
+  echo " A          : $meterData_A__A A"
+  echo " AphA       : $meterData_AphA__A A"
+  echo " AphB       : $meterData_AphB__A A"
+  echo " AphC       : $meterData_AphC__A A"
+  echo " PhV        : $meterData_PhV__V V"
+  echo " PhVphA     : $meterData_PhVphA__V V"
+  echo " PhVphB     : $meterData_PhVphB__V V"
+  echo " PVphC      : $meterData_PVphC__V V"
+  echo " PPV        : $meterData_PPV__V V"
+  echo " PhVphAB    : $meterData_PhVphAB__V V"
+  echo " PhVphBC    : $meterData_PhVphBC__V V"
+  echo " PhVphCA    : $meterData_PhVphCA__V V"
+  echo " Hz         : $meterData_Hz__Hz Hz"
+  echo " W          : $meterData_W__W W"
+  echo " WphA       : $meterData_WphA__W W"
+  echo " WphB       : $meterData_WphB__W W"
+  echo " WphC       : $meterData_WphC__W W"
+  echo " VA         : $meterData_VA__VA VA"
+  echo " VAphA      : $meterData_VAphA__VA VA"
+  echo " VAphB      : $meterData_VAphB__VA VA"
+  echo " VAphC      : $meterData_VAphC__VA VA"
+  echo " VAR        : $meterData_VAR__var var"
+  echo " VARphA     : $meterData_VARphA__var var"
+  echo " VARphB     : $meterData_VARphB__var var"
+  echo " VARphC     : $meterData_VARphC__var var"
+  echo " PF         : $meterData_PF__perct %"
+  echo " PFphA      : $meterData_PFphA__perct %"
+  echo " PFphB      : $meterData_PFphB__perct %"
+  echo " PFphC      : $meterData_PFphC__perct %"
+  echo " TotWhExp   : $meterData_TotWhExp__Wh Wh"
+  echo " TotWhExpPhA: $meterData_TotWhExpPhA__Wh Wh"
+  echo " TotWhExpPhB: $meterData_TotWhExpPhB__Wh Wh"
+  echo " TotWhExpPnC: $meterData_TotWhExpPnC__Wh Wh"
+  echo " TotWhImp   : $meterData_TotWhImp__Wh Wh"
+  echo " TotWhImpPhA: $meterData_TotWhImpPhA__Wh Wh"
+  echo " TotWhImpPhB: $meterData_TotWhImpPhB__Wh Wh"
+  echo " TotWhImpPnC: $meterData_TotWhImpPnC__Wh Wh" 
+}
+
+function ProcessCCUVariables() {
+  echo "ProcessCCUVariables ${SE_CCU_VARS[@]} ${#SE_CCU_VARS[@]}"
+  for sysvar in "${!SE_CCU_VARS[@]}"; do
+    #echo -n " $sysvar: "
+    datavar=${SE_CCU_VARS[${sysvar}]}
+    #echo "$datavar"
+    createVariable "${SE_CCU_PV_VAR}${sysvar}" float "${datavar}"
+    setVariableState "${SE_CCU_PV_VAR}${sysvar}" ${!datavar}
+  done
 }
 
 # runs initial action only once at startup
@@ -497,9 +516,7 @@ function run_semon()
 
   # Collecting data
   ReadBulkDataInverter
-  if [ "$SM_READ_STATUS" == "true" ]; then
-    ReadInverterGeneralStatus
-  fi
+  ReadInverterGeneralStatus
   if [ "$SM_READ_FULL_DATA" == "true" ]; then
     ReadInverterFullData
   else
@@ -508,9 +525,7 @@ function run_semon()
   ClearBulkData
 
   ReadBulkDataMeter
-  if [ "$SM_READ_STATUS" == "true" ]; then
-    ReadMeterGeneralStatus
-  fi
+  ReadMeterGeneralStatus
   if [ "$SM_READ_FULL_DATA" == "true" ]; then
     ReadMeterFullData
   else
@@ -519,14 +534,13 @@ function run_semon()
   ClearBulkData
 
   # Process the data
-  if [ "$SM_READ_STATUS" == "true" ]; then
-    ProcessGeneralStatus
-  fi
+  ProcessGeneralStatus
   if [ "$SM_READ_FULL_DATA" == "true" ]; then
     ProcessFullData
   else
     ProcessBaseData
   fi
+  ProcessCCUVariables
 
   # output some statistics
   echo

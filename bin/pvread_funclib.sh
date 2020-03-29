@@ -34,9 +34,9 @@ function ReadBulkData() {
     modBusDataCache=( $register $val )
 
     if [ $ret -eq 0 ]; then
-        return ${RETURN_SUCCESS}
+        return $RETURN_SUCCESS
     else
-        return ${RETURN_FAILURE}
+        return $RETURN_FAILURE
     fi
 }
 
@@ -46,9 +46,9 @@ function ClearBulkData() {
 
 function IsBulkAvailable() {
     if [[ ${modBusDataCache[@]:+${modBusDataCache[@]}} ]]; then
-        return ${RETURN_SUCCESS}
+        return $RETURN_SUCCESS
     else
-        return ${RETURN_FAILURE}
+        return $RETURN_FAILURE
     fi
 }
 
@@ -60,7 +60,7 @@ function GetModBusValue() {
 
     if IsBulkAvailable; then
         val=$(GetBulkValue $register $length)
-        ret=${RETURN_SUCCESS}
+        ret=$RETURN_SUCCESS
     else 
         val=$($callModBus $register $length)
         ret=$?
@@ -68,9 +68,9 @@ function GetModBusValue() {
 
     if [ $ret -eq 0 ]; then
         echo "$val"
-        return ${RETURN_SUCCESS}
+        return $RETURN_SUCCESS
     else
-        return ${RETURN_FAILURE}
+        return $RETURN_FAILURE
     fi
 }
 
@@ -267,7 +267,7 @@ function GetMeterErrorState() {
 function ReadInverterCommonData() {
     ReadBulkData $invCommonBlock 66
     if [ $? -ne $RETURN_SUCCESS ]; then
-        return ${RETURN_FAILURE}
+        return $RETURN_FAILURE
     fi
 
     # inverter does not follow SunSpec ID 1 completely....
@@ -282,13 +282,13 @@ function ReadInverterCommonData() {
     inverterData_DA=$(GetUInt16Register $(($invCommonBlock + 66)))
     ClearBulkData
 
-    return ${RETURN_SUCCESS}
+    return $RETURN_SUCCESS
 }
 
 function ReadMeterCommonData() {
     ReadBulkData $meterCommonBlock 66
     if [ $? -ne $RETURN_SUCCESS ]; then
-        return ${RETURN_FAILURE}
+        return $RETURN_FAILURE
     fi
 
     meterData_ID=$(GetUInt16Register $(($meterCommonBlock + 0)))
@@ -301,7 +301,7 @@ function ReadMeterCommonData() {
     meterData_DA=$(GetUInt16Register $(($meterCommonBlock + 66)))
     ClearBulkData
 
-    return ${RETURN_SUCCESS}
+    return $RETURN_SUCCESS
 }
 
 function ReadInverterGeneralStatus() {
@@ -311,19 +311,19 @@ function ReadInverterGeneralStatus() {
     inverterData_ID=$(GetUInt16Register $((invModel103Block + 0)))
     if (( inverterData_ID != 103 )); then
         echo "ID     : $inverterData_ID (UNMATCHED - expected 103)"
-        return ${RETURN_FAILURE}
+        return $RETURN_FAILURE
     fi
     inverterData_L=$(GetUInt16Register $((invModel103Block + 1)))
     if (( inverterData_L != 50 )); then
         echo "L      : $inverterData_L (UNMATCHED - expected 50)"
-        return ${RETURN_FAILURE}
+        return $RETURN_FAILURE
     fi
 
     scale=$(GetScaleFactor $((invModel103Block + 37)))
-    #inverterData_TmpCab="$(GetScaledUInt16FloatValue $((invModel103Block + 33)) $scale) °C"   # mandatory but obviously not used..
-    inverterData_TmpSnk="$(GetScaledUInt16FloatValue $((invModel103Block + 34)) $scale) °C"    # optional but filled
-    #inverterData_TmpTrns="$(GetScaledUInt16FloatValue $((invModel103Block + 35)) $scale) °C"  # seems unused
-    #inverterData_TmpOt="$(GetScaledUInt16FloatValue $((invModel103Block + 36)) $scale) °C"    # seems unused
+    #inverterData_TmpCab__C="$(GetScaledUInt16FloatValue $((invModel103Block + 33)) $scale)"   # mandatory but obviously not used..
+    inverterData_TmpSnk__C="$(GetScaledUInt16FloatValue $((invModel103Block + 34)) $scale)"    # optional but filled
+    #inverterData_TmpTrns__C="$(GetScaledUInt16FloatValue $((invModel103Block + 35)) $scale)"  # seems unused
+    #inverterData_TmpOt__C="$(GetScaledUInt16FloatValue $((invModel103Block + 36)) $scale)"    # seems unused
 
     inverterData_St="$(GetInverterOperatingState $((invModel103Block + 38)))"
     inverterData_StVnd="$(GetUInt16Register $((invModel103Block + 39)))"
@@ -339,74 +339,74 @@ function ReadInverterBaseData() {
     local scale
 
     scale=$(GetScaleFactor $((invModel103Block + 6)))
-    inverterData_A="$(GetScaledUInt16FloatValue $((invModel103Block + 2)) $scale) A"
-    inverterData_AphA="$(GetScaledUInt16FloatValue $((invModel103Block + 3)) $scale) A"
-    inverterData_AphB="$(GetScaledUInt16FloatValue $((invModel103Block + 4)) $scale) A"
-    inverterData_AphC="$(GetScaledUInt16FloatValue $((invModel103Block + 5)) $scale) A"
+    inverterData_A__A="$(GetScaledUInt16FloatValue $((invModel103Block + 2)) $scale)"
+    inverterData_AphA__A="$(GetScaledUInt16FloatValue $((invModel103Block + 3)) $scale)"
+    inverterData_AphB__A="$(GetScaledUInt16FloatValue $((invModel103Block + 4)) $scale)"
+    inverterData_AphC__A="$(GetScaledUInt16FloatValue $((invModel103Block + 5)) $scale)"
 
     scale=$(GetScaleFactor $((invModel103Block + 15)))
-    inverterData_W="$(GetScaledUInt16FloatValue $((invModel103Block + 14)) $scale) W"
+    inverterData_W__W="$(GetScaledUInt16FloatValue $((invModel103Block + 14)) $scale)"
 
     scale=$(GetScaleFactor $((invModel103Block + 26)))
-    inverterData_WH="$(GetScaledUInt32FloatValue $((invModel103Block + 24)) $scale) Wh"
+    inverterData_WH__Wh="$(GetScaledUInt32FloatValue $((invModel103Block + 24)) $scale)"
 
     scale=$(GetScaleFactor $((invModel103Block + 28)))
-    inverterData_DCA="$(GetScaledUInt16FloatValue $((invModel103Block + 27)) $scale) A"
+    inverterData_DCA__A="$(GetScaledUInt16FloatValue $((invModel103Block + 27)) $scale)"
 
     scale=$(GetScaleFactor $((invModel103Block + 30)))
-    inverterData_DCV="$(GetScaledUInt16FloatValue $((invModel103Block + 29)) $scale) V"
+    inverterData_DCV__V="$(GetScaledUInt16FloatValue $((invModel103Block + 29)) $scale)"
 
     scale=$(GetScaleFactor $((invModel103Block + 32)))
-    inverterData_DCW="$(GetScaledUInt16FloatValue $((invModel103Block + 31)) $scale) W"
+    inverterData_DCW__W="$(GetScaledUInt16FloatValue $((invModel103Block + 31)) $scale)"
 
-    return ${RETURN_SUCCESS}
+    return $RETURN_SUCCESS
 }
 
 function ReadInverterFullData() {
     local scale
 
     scale=$(GetScaleFactor $((invModel103Block + 6)))
-    inverterData_A="$(GetScaledUInt16FloatValue $((invModel103Block + 2)) $scale) A"
-    inverterData_AphA="$(GetScaledUInt16FloatValue $((invModel103Block + 3)) $scale) A"
-    inverterData_AphB="$(GetScaledUInt16FloatValue $((invModel103Block + 4)) $scale) A"
-    inverterData_AphC="$(GetScaledUInt16FloatValue $((invModel103Block + 5)) $scale) A"
+    inverterData_A__A="$(GetScaledUInt16FloatValue $((invModel103Block + 2)) $scale)"
+    inverterData_AphA__A="$(GetScaledUInt16FloatValue $((invModel103Block + 3)) $scale)"
+    inverterData_AphB__A="$(GetScaledUInt16FloatValue $((invModel103Block + 4)) $scale)"
+    inverterData_AphC__A="$(GetScaledUInt16FloatValue $((invModel103Block + 5)) $scale)"
 
     scale=$(GetScaleFactor $((invModel103Block + 13)))
-    inverterData_PPVphAB="$(GetScaledUInt16FloatValue $((invModel103Block + 7)) $scale) V"
-    inverterData_PPVphBC="$(GetScaledUInt16FloatValue $((invModel103Block + 8)) $scale) V"
-    inverterData_PPVphCA="$(GetScaledUInt16FloatValue $((invModel103Block + 9)) $scale) V"
-    inverterData_PPVphA="$(GetScaledUInt16FloatValue $((invModel103Block + 10)) $scale) V"
-    inverterData_PPVphB="$(GetScaledUInt16FloatValue $((invModel103Block + 11)) $scale) V"
-    inverterData_PPVphC="$(GetScaledUInt16FloatValue $((invModel103Block + 12)) $scale) V"
+    inverterData_PPVphAB__V="$(GetScaledUInt16FloatValue $((invModel103Block + 7)) $scale)"
+    inverterData_PPVphBC__V="$(GetScaledUInt16FloatValue $((invModel103Block + 8)) $scale)"
+    inverterData_PPVphCA__V="$(GetScaledUInt16FloatValue $((invModel103Block + 9)) $scale)"
+    inverterData_PPVphA__V="$(GetScaledUInt16FloatValue $((invModel103Block + 10)) $scale)"
+    inverterData_PPVphB__V="$(GetScaledUInt16FloatValue $((invModel103Block + 11)) $scale)"
+    inverterData_PPVphC__V="$(GetScaledUInt16FloatValue $((invModel103Block + 12)) $scale)"
 
     scale=$(GetScaleFactor $((invModel103Block + 15)))
-    inverterData_W="$(GetScaledUInt16FloatValue $((invModel103Block + 14)) $scale) W"
+    inverterData_W__W="$(GetScaledUInt16FloatValue $((invModel103Block + 14)) $scale)"
 
     scale=$(GetScaleFactor $((invModel103Block + 17)))
-    inverterData_Hz="$(GetScaledUInt16FloatValue $((invModel103Block + 16)) $scale) Hz"
+    inverterData_Hz__Hz="$(GetScaledUInt16FloatValue $((invModel103Block + 16)) $scale)"
 
     scale=$(GetScaleFactor $((invModel103Block + 19)))
-    inverterData_VA="$(GetScaledUInt16FloatValue $((invModel103Block + 18)) $scale) VA"
+    inverterData_VA__VA="$(GetScaledUInt16FloatValue $((invModel103Block + 18)) $scale)"
 
     scale=$(GetScaleFactor $((invModel103Block + 21)))
-    inverterData_VAr="$(GetScaledUInt16FloatValue $((invModel103Block + 20)) $scale) var"
+    inverterData_VAr__var="$(GetScaledUInt16FloatValue $((invModel103Block + 20)) $scale)"
 
     scale=$(GetScaleFactor $((invModel103Block + 23)))
-    inverterData_PF="$(GetScaledUInt16FloatValue $((invModel103Block + 22)) $scale) %"
+    inverterData_PF__perct="$(GetScaledUInt16FloatValue $((invModel103Block + 22)) $scale)"
 
     scale=$(GetScaleFactor $((invModel103Block + 26)))
-    inverterData_WH="$(GetScaledUInt32FloatValue $((invModel103Block + 24)) $scale) Wh"
+    inverterData_WH__Wh="$(GetScaledUInt32FloatValue $((invModel103Block + 24)) $scale)"
 
     scale=$(GetScaleFactor $((invModel103Block + 28)))
-    inverterData_DCA="$(GetScaledUInt16FloatValue $((invModel103Block + 27)) $scale) A"
+    inverterData_DCA__A="$(GetScaledUInt16FloatValue $((invModel103Block + 27)) $scale)"
 
     scale=$(GetScaleFactor $((invModel103Block + 30)))
-    inverterData_DCV="$(GetScaledUInt16FloatValue $((invModel103Block + 29)) $scale) V"
+    inverterData_DCV__V="$(GetScaledUInt16FloatValue $((invModel103Block + 29)) $scale)"
 
     scale=$(GetScaleFactor $((invModel103Block + 32)))
-    inverterData_DCW="$(GetScaledUInt16FloatValue $((invModel103Block + 31)) $scale) W"
+    inverterData_DCW__W="$(GetScaledUInt16FloatValue $((invModel103Block + 31)) $scale)"
 
-    return ${RETURN_SUCCESS}
+    return $RETURN_SUCCESS
 }
 
 function ReadBulkDataMeter() {
@@ -418,28 +418,28 @@ function ReadMeterBaseData() {
     local scale
 
     scale=$(GetScaleFactor $((meterModel203Block + 6)))
-    meterData_A="$(GetScaledUInt16FloatValue $((meterModel203Block + 2)) $scale) A"
+    meterData_A__A="$(GetScaledUInt16FloatValue $((meterModel203Block + 2)) $scale)"
 
     scale=$(GetScaleFactor $((meterModel203Block + 15)))
-    meterData_PhV="$(GetScaledUInt16FloatValue $((meterModel203Block + 7)) $scale) V"
+    meterData_PhV__V="$(GetScaledUInt16FloatValue $((meterModel203Block + 7)) $scale)"
 
     scale=$(GetScaleFactor $((meterModel203Block + 22)))
-    meterData_W="$(GetScaledUInt16FloatValue $((meterModel203Block + 18)) $scale) W"
-    meterData_WphA="$(GetScaledUInt16FloatValue $((meterModel203Block + 19)) $scale) W"
-    meterData_WphB="$(GetScaledUInt16FloatValue $((meterModel203Block + 20)) $scale) W"
-    meterData_WphC="$(GetScaledUInt16FloatValue $((meterModel203Block + 21)) $scale) W"
+    meterData_W__W="$(GetScaledUInt16FloatValue $((meterModel203Block + 18)) $scale)"
+    meterData_WphA__W="$(GetScaledUInt16FloatValue $((meterModel203Block + 19)) $scale)"
+    meterData_WphB__W="$(GetScaledUInt16FloatValue $((meterModel203Block + 20)) $scale)"
+    meterData_WphC__W="$(GetScaledUInt16FloatValue $((meterModel203Block + 21)) $scale)"
 
     scale=$(GetScaleFactor $((meterModel203Block + 54)))
-    meterData_TotWhExp="$(GetScaledUInt32FloatValue $((meterModel203Block + 38)) $scale) Wh"
-    meterData_TotWhExpPhA="$(GetScaledUInt32FloatValue $((meterModel203Block + 40)) $scale) Wh"
-    meterData_TotWhExpPhB="$(GetScaledUInt32FloatValue $((meterModel203Block + 42)) $scale) Wh"
-    meterData_TotWhExpPnC="$(GetScaledUInt32FloatValue $((meterModel203Block + 44)) $scale) Wh"
-    meterData_TotWhImp="$(GetScaledUInt32FloatValue $((meterModel203Block + 46)) $scale) Wh"
-    meterData_TotWhImpPhA="$(GetScaledUInt32FloatValue $((meterModel203Block + 48)) $scale) Wh"
-    meterData_TotWhImpPhB="$(GetScaledUInt32FloatValue $((meterModel203Block + 50)) $scale) Wh"
-    meterData_TotWhImpPnC="$(GetScaledUInt32FloatValue $((meterModel203Block + 52)) $scale) Wh"
+    meterData_TotWhExp__Wh="$(GetScaledUInt32FloatValue $((meterModel203Block + 38)) $scale)"
+    meterData_TotWhExpPhA__Wh="$(GetScaledUInt32FloatValue $((meterModel203Block + 40)) $scale)"
+    meterData_TotWhExpPhB__Wh="$(GetScaledUInt32FloatValue $((meterModel203Block + 42)) $scale)"
+    meterData_TotWhExpPnC__Wh="$(GetScaledUInt32FloatValue $((meterModel203Block + 44)) $scale)"
+    meterData_TotWhImp__Wh="$(GetScaledUInt32FloatValue $((meterModel203Block + 46)) $scale)"
+    meterData_TotWhImpPhA__Wh="$(GetScaledUInt32FloatValue $((meterModel203Block + 48)) $scale)"
+    meterData_TotWhImpPhB__Wh="$(GetScaledUInt32FloatValue $((meterModel203Block + 50)) $scale)"
+    meterData_TotWhImpPnC__Wh="$(GetScaledUInt32FloatValue $((meterModel203Block + 52)) $scale)"
 
-    return ${RETURN_SUCCESS}
+    return $RETURN_SUCCESS
 }
 
 function ReadMeterGeneralStatus() {
@@ -449,74 +449,74 @@ function ReadMeterGeneralStatus() {
     meterData_ID=$(GetUInt16Register $((meterModel203Block + 0)))
     if (( meterData_ID != 203 )); then
         echo "ID           : $meterData_ID (UNMATCHED - expected 103)"
-        return ${RETURN_FAILURE}
+        return $RETURN_FAILURE
     fi
     meterData_L=$(GetUInt16Register $((meterModel203Block + 1)))
     if (( meterData_L != 105 )); then
         echo "L            : $meterData_L (UNMATCHED - expected 50)"
-        return ${RETURN_FAILURE}
+        return $RETURN_FAILURE
     fi
 
     meterData_Evt="$(GetMeterErrorState $((meterModel203Block + 105)))"
 
-    return ${RETURN_SUCCESS}
+    return $RETURN_SUCCESS
 }
 
 function ReadMeterFullData() {
     local scale
 
     scale=$(GetScaleFactor $((meterModel203Block + 6)))
-    meterData_A="$(GetScaledUInt16FloatValue $((meterModel203Block + 2)) $scale) A"
-    meterData_AphA="$(GetScaledUInt16FloatValue $((meterModel203Block + 3)) $scale) A"
-    meterData_AphB="$(GetScaledUInt16FloatValue $((meterModel203Block + 4)) $scale) A"
-    meterData_AphC="$(GetScaledUInt16FloatValue $((meterModel203Block + 5)) $scale) A"
+    meterData_A__A="$(GetScaledUInt16FloatValue $((meterModel203Block + 2)) $scale)"
+    meterData_AphA__A="$(GetScaledUInt16FloatValue $((meterModel203Block + 3)) $scale)"
+    meterData_AphB__A="$(GetScaledUInt16FloatValue $((meterModel203Block + 4)) $scale)"
+    meterData_AphC__A="$(GetScaledUInt16FloatValue $((meterModel203Block + 5)) $scale)"
 
     scale=$(GetScaleFactor $((meterModel203Block + 15)))
-    meterData_PhV="$(GetScaledUInt16FloatValue $((meterModel203Block + 7)) $scale) V"
-    meterData_PhVphA="$(GetScaledUInt16FloatValue $((meterModel203Block + 8)) $scale) V"
-    meterData_PhVphB="$(GetScaledUInt16FloatValue $((meterModel203Block + 9)) $scale) V"
-    meterData_PVphC="$(GetScaledUInt16FloatValue $((meterModel203Block + 10)) $scale) V"
-    meterData_PPV="$(GetScaledUInt16FloatValue $((meterModel203Block + 11)) $scale) V"
-    meterData_PhVphAB="$(GetScaledUInt16FloatValue $((meterModel203Block + 12)) $scale) V"
-    meterData_PhVphBC="$(GetScaledUInt16FloatValue $((meterModel203Block + 13)) $scale) V"
-    meterData_PhVphCA="$(GetScaledUInt16FloatValue $((meterModel203Block + 14)) $scale) V"
+    meterData_PhV__V="$(GetScaledUInt16FloatValue $((meterModel203Block + 7)) $scale)"
+    meterData_PhVphA__V="$(GetScaledUInt16FloatValue $((meterModel203Block + 8)) $scale)"
+    meterData_PhVphB__V="$(GetScaledUInt16FloatValue $((meterModel203Block + 9)) $scale)"
+    meterData_PVphC__V="$(GetScaledUInt16FloatValue $((meterModel203Block + 10)) $scale)"
+    meterData_PPV__V="$(GetScaledUInt16FloatValue $((meterModel203Block + 11)) $scale)"
+    meterData_PhVphAB__V="$(GetScaledUInt16FloatValue $((meterModel203Block + 12)) $scale)"
+    meterData_PhVphBC__V="$(GetScaledUInt16FloatValue $((meterModel203Block + 13)) $scale)"
+    meterData_PhVphCA__V="$(GetScaledUInt16FloatValue $((meterModel203Block + 14)) $scale)"
 
     scale=$(GetScaleFactor $((meterModel203Block + 17)))
-    meterData_Hz="$(GetScaledUInt16FloatValue $((meterModel203Block + 16)) $scale) Hz"
+    meterData_Hz__Hz="$(GetScaledUInt16FloatValue $((meterModel203Block + 16)) $scale)"
 
     scale=$(GetScaleFactor $((meterModel203Block + 22)))
-    meterData_W="$(GetScaledUInt16FloatValue $((meterModel203Block + 18)) $scale) W"
-    meterData_WphA="$(GetScaledUInt16FloatValue $((meterModel203Block + 19)) $scale) W"
-    meterData_WphB="$(GetScaledUInt16FloatValue $((meterModel203Block + 20)) $scale) W"
-    meterData_WphC="$(GetScaledUInt16FloatValue $((meterModel203Block + 21)) $scale) W"
+    meterData_W__W="$(GetScaledUInt16FloatValue $((meterModel203Block + 18)) $scale)"
+    meterData_WphA__W="$(GetScaledUInt16FloatValue $((meterModel203Block + 19)) $scale)"
+    meterData_WphB__W="$(GetScaledUInt16FloatValue $((meterModel203Block + 20)) $scale)"
+    meterData_WphC__W="$(GetScaledUInt16FloatValue $((meterModel203Block + 21)) $scale)"
 
     scale=$(GetScaleFactor $((meterModel203Block + 27)))
-    meterData_VA="$(GetScaledUInt16FloatValue $((meterModel203Block + 23)) $scale) VA"
-    meterData_VAphA="$(GetScaledUInt16FloatValue $((meterModel203Block + 24)) $scale) VA"
-    meterData_VAphB="$(GetScaledUInt16FloatValue $((meterModel203Block + 25)) $scale) VA"
-    meterData_VAphC="$(GetScaledUInt16FloatValue $((meterModel203Block + 26)) $scale) VA"
+    meterData_VA__VA="$(GetScaledUInt16FloatValue $((meterModel203Block + 23)) $scale)"
+    meterData_VAphA__VA="$(GetScaledUInt16FloatValue $((meterModel203Block + 24)) $scale)"
+    meterData_VAphB__VA="$(GetScaledUInt16FloatValue $((meterModel203Block + 25)) $scale)"
+    meterData_VAphC__VA="$(GetScaledUInt16FloatValue $((meterModel203Block + 26)) $scale)"
 
     scale=$(GetScaleFactor $((meterModel203Block + 32)))
-    meterData_VAR="$(GetScaledUInt16FloatValue $((meterModel203Block + 28)) $scale) var"
-    meterData_VARphA="$(GetScaledUInt16FloatValue $((meterModel203Block + 29)) $scale) var"
-    meterData_VARphB="$(GetScaledUInt16FloatValue $((meterModel203Block + 30)) $scale) var"
-    meterData_VARphC="$(GetScaledUInt16FloatValue $((meterModel203Block + 31)) $scale) var"
+    meterData_VAR__var="$(GetScaledUInt16FloatValue $((meterModel203Block + 28)) $scale)"
+    meterData_VARphA__var="$(GetScaledUInt16FloatValue $((meterModel203Block + 29)) $scale)"
+    meterData_VARphB__var="$(GetScaledUInt16FloatValue $((meterModel203Block + 30)) $scale)"
+    meterData_VARphC__var="$(GetScaledUInt16FloatValue $((meterModel203Block + 31)) $scale)"
 
     scale=$(GetScaleFactor $((meterModel203Block + 37)))
-    meterData_PF="$(GetScaledUInt16FloatValue $((meterModel203Block + 33)) $scale) %"
-    meterData_PFphA="$(GetScaledUInt16FloatValue $((meterModel203Block + 34)) $scale) %"
-    meterData_PFphB="$(GetScaledUInt16FloatValue $((meterModel203Block + 35)) $scale) %"
-    meterData_PFphC="$(GetScaledUInt16FloatValue $((meterModel203Block + 36)) $scale) %"
+    meterData_PF__perct="$(GetScaledUInt16FloatValue $((meterModel203Block + 33)) $scale)"
+    meterData_PFphA__perct="$(GetScaledUInt16FloatValue $((meterModel203Block + 34)) $scale)"
+    meterData_PFphB__perct="$(GetScaledUInt16FloatValue $((meterModel203Block + 35)) $scale)"
+    meterData_PFphC__perct="$(GetScaledUInt16FloatValue $((meterModel203Block + 36)) $scale)"
 
     scale=$(GetScaleFactor $((meterModel203Block + 54)))
-    meterData_TotWhExp="$(GetScaledUInt32FloatValue $((meterModel203Block + 38)) $scale) Wh"
-    meterData_TotWhExpPhA="$(GetScaledUInt32FloatValue $((meterModel203Block + 40)) $scale) Wh"
-    meterData_TotWhExpPhB="$(GetScaledUInt32FloatValue $((meterModel203Block + 42)) $scale) Wh"
-    meterData_TotWhExpPnC="$(GetScaledUInt32FloatValue $((meterModel203Block + 44)) $scale) Wh"
-    meterData_TotWhImp="$(GetScaledUInt32FloatValue $((meterModel203Block + 46)) $scale) Wh"
-    meterData_TotWhImpPhA="$(GetScaledUInt32FloatValue $((meterModel203Block + 48)) $scale) Wh"
-    meterData_TotWhImpPhB="$(GetScaledUInt32FloatValue $((meterModel203Block + 50)) $scale) Wh"
-    meterData_TotWhImpPnC="$(GetScaledUInt32FloatValue $((meterModel203Block + 52)) $scale) Wh"
+    meterData_TotWhExp__Wh="$(GetScaledUInt32FloatValue $((meterModel203Block + 38)) $scale)"
+    meterData_TotWhExpPhA__Wh="$(GetScaledUInt32FloatValue $((meterModel203Block + 40)) $scale)"
+    meterData_TotWhExpPhB__Wh="$(GetScaledUInt32FloatValue $((meterModel203Block + 42)) $scale)"
+    meterData_TotWhExpPnC__Wh="$(GetScaledUInt32FloatValue $((meterModel203Block + 44)) $scale)"
+    meterData_TotWhImp__Wh="$(GetScaledUInt32FloatValue $((meterModel203Block + 46)) $scale)"
+    meterData_TotWhImpPhA__Wh="$(GetScaledUInt32FloatValue $((meterModel203Block + 48)) $scale)"
+    meterData_TotWhImpPhB__Wh="$(GetScaledUInt32FloatValue $((meterModel203Block + 50)) $scale)"
+    meterData_TotWhImpPnC__Wh="$(GetScaledUInt32FloatValue $((meterModel203Block + 52)) $scale)"
 
     # looks unsed in WattNode SE-WND-3Y-400-MB
 
@@ -548,5 +548,5 @@ function ReadMeterFullData() {
     # echo "TotVArhExpQ4PhB: $(GetScaledUInt32FloatValue $((meterModel203Block + 100)) $scale) varh"
     # echo "TotVArhExpQ4PhC: $(GetScaledUInt32FloatValue $((meterModel203Block + 102)) $scale) varh"
 
-    return ${RETURN_SUCCESS}
+    return $RETURN_SUCCESS
 }

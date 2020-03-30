@@ -410,7 +410,7 @@ function ReadInverterFullData() {
 }
 
 function ReadBulkDataMeter() {
-    ReadBulkData $meterModel203Block 50
+    ReadBulkData $meterModel203Block 150
     return $?
 }
 

@@ -41,7 +41,7 @@ set invModel103BlockLen 50
 set meterCommonBlock 40121
 set meterCommonBlockLen 66
 set meterModel203Block 40188
-set meterModel203BlockLen 50
+set meterModel203BlockLen 105
 
 switch -- [lindex $argv 2] {
     "CommonInv" {
@@ -57,8 +57,8 @@ switch -- [lindex $argv 2] {
         set len $invModel103BlockLen
     }
     "Meter" {
-        set block $invModel103Block
-        set len $meterCommonBlockLen
+        set block $meterModel203Block
+        set len $meterModel203BlockLen
     }
     default {
         puts "Unkown function [lindex $argv 3]!"
@@ -104,9 +104,6 @@ switch -- [lindex $argv 2] {
                         meterCData_SN \"[ GetStringRegister 50 16 ]\"
                         meterCData_DA \"[ GetUInt16Register 66 ]\""
         array set ::SE_modBus::dataArray $dataString
-        foreach { item value } [ array get ::SE_modBus::dataArray ] {
-            puts "$item=$value"
-        }
     }
     "Inverter" {
         set scale_A [ GetUInt16Register 6 ]
@@ -139,18 +136,108 @@ switch -- [lindex $argv 2] {
                         inverterData_Evt1 \"[ GetInverterErrorState 40 ]\""
         array set ::SE_modBus::dataArray $dataString
         if { $::SE_modBus::dataArray(inverterData_ID) != 103 } {
-            puts "ID : $::SE_modBus::dataArray(inverterData_ID) (UNMATCHED - expected 103)"
+            puts "inverterData_ID : $::SE_modBus::dataArray(inverterData_ID) (UNMATCHED - expected 103)"
             exit 1
         }
         if { $::SE_modBus::dataArray(inverterData_L) != 50 } {
-            puts "L  : $::SE_modBus::dataArray(inverterData_L) (UNMATCHED - expected 50)"
+            puts "inverterData_L  : $::SE_modBus::dataArray(inverterData_L) (UNMATCHED - expected 50)"
             exit 1
-        }
-        foreach { item value } [ array get ::SE_modBus::dataArray ] {
-            puts "$item=$value"
         }
     }
     "Meter" {
+        set scaleA "[ GetUInt16Register 6 ]"
+        set scalePhV "[ GetUInt16Register 15 ]"
+        set scaleW "[ GetUInt16Register 22 ]"
+        set scaleVA "[ GetUInt16Register 27 ]"
+        set scaleVAR "[ GetUInt16Register 32 ]"
+        set scalePF "[ GetUInt16Register 37 ]"
+        set scaleTotWh [expr [ GetUInt16Register 54 ] - 3 ]
+        set meterData_TotWhImpPhB__kWh "[ GetScaledUInt32FloatValue 50 $scaleTotWh ]"
+
+        set dataString "meterData_ID \"[ GetUInt16Register 0 ]\"
+                        meterData_L \"[ GetUInt16Register 1 ]\"
+                        meterData_A__A \"[ GetScaledUInt16FloatValue 2 $scaleA ]\"
+                        meterData_AphA__A \"[ GetScaledUInt16FloatValue 3 $scaleA ]\"
+                        meterData_AphB__A \"[ GetScaledUInt16FloatValue 4 $scaleA ]\"
+                        meterData_AphC__A \"[ GetScaledUInt16FloatValue 5 $scaleA ]\"
+                        meterData_PhV__V \"[ GetScaledUInt16FloatValue 7 $scalePhV ]\"
+                        meterData_PhVphA__V \"[ GetScaledUInt16FloatValue 8 $scalePhV ]\"
+                        meterData_PhVphB__V \"[ GetScaledUInt16FloatValue 9 $scalePhV ]\"
+                        meterData_PVphC__V \"[ GetScaledUInt16FloatValue 10 $scalePhV ]\"
+                        meterData_PPV__V \"[ GetScaledUInt16FloatValue 11 $scalePhV ]\"
+                        meterData_PhVphAB__V \"[ GetScaledUInt16FloatValue 12 $scalePhV ]\"
+                        meterData_PhVphBC__V \"[ GetScaledUInt16FloatValue 13 $scalePhV ]\"
+                        meterData_PhVphCA__V \"[ GetScaledUInt16FloatValue 14 $scalePhV ]\"
+                        meterData_Hz__Hz [ GetScaledUInt16FloatValue 16 [ GetUInt16Register 17 ] ]
+                        meterData_W__W \"[ GetScaledUInt16FloatValue 18 $scaleW ]\"
+                        meterData_WphA__W \"[ GetScaledUInt16FloatValue 19 $scaleW ]\"
+                        meterData_WphB__W \"[ GetScaledUInt16FloatValue 20 $scaleW ]\"
+                        meterData_WphC__W \"[ GetScaledUInt16FloatValue 21 $scaleW ]\"
+                        meterData_VA__VA \"[ GetScaledUInt16FloatValue 23 $scaleVA ]\"
+                        meterData_VAphA__VA \"[ GetScaledUInt16FloatValue 24 $scaleVA ]\"
+                        meterData_VAphB__VA \"[ GetScaledUInt16FloatValue 25 $scaleVA ]\"
+                        meterData_VAphC__VA \"[ GetScaledUInt16FloatValue 26 $scaleVA ]\"
+                        meterData_VAR__var \"[ GetScaledUInt16FloatValue 28 $scaleVAR ]\"
+                        meterData_VARphA__var \"[ GetScaledUInt16FloatValue 29 $scaleVAR ]\"
+                        meterData_VARphB__var \"[ GetScaledUInt16FloatValue 30 $scaleVAR ]\"
+                        meterData_VARphC__var \"[ GetScaledUInt16FloatValue 31 $scaleVAR ]\"
+                        meterData_PF__perct \"[ GetScaledUInt16FloatValue 33 $scalePF ]\"
+                        meterData_PFphA__perct \"[ GetScaledUInt16FloatValue 34 $scalePF ]\"
+                        meterData_PFphB__perct \"[ GetScaledUInt16FloatValue 35 $scalePF ]\"
+                        meterData_PFphC__perct \"[ GetScaledUInt16FloatValue 36 $scalePF ]\"
+                        meterData_TotWhExp__kWh \"[ GetScaledUInt32FloatValue 38 $scaleTotWh ]\"
+                        meterData_TotWhExpPhA__kWh \"[ GetScaledUInt32FloatValue 40 $scaleTotWh ]\"
+                        meterData_TotWhExpPhB__kWh \"[ GetScaledUInt32FloatValue 42 $scaleTotWh ]\"
+                        meterData_TotWhExpPnC__kWh \"[ GetScaledUInt32FloatValue 44 $scaleTotWh ]\"
+                        meterData_TotWhImp__kWh \"[ GetScaledUInt32FloatValue 46 $scaleTotWh ]\"
+                        meterData_TotWhImpPhA__kWh \"[ GetScaledUInt32FloatValue 48 $scaleTotWh ]\"
+                        meterData_TotWhImpPhB__kWh \"[ GetScaledUInt32FloatValue 50 $scaleTotWh ]\"
+                        meterData_TotWhImpPnC__kWh \"[ GetScaledUInt32FloatValue 52 $scaleTotWh ]\"
+                        meterData_Evt [ GetMeterErrorState 105 ]"
+
+    # looks unsed in WattNode SE-WND-3Y-400-MB
+
+    # scale \"[ GetScaleFactor 71 ]\"
+    # puts "TotVAhExp    : $(GetScaledUInt32FloatValue 55 $scale ]\" VAh"
+    # puts "TotVAhExpPhA : $(GetScaledUInt32FloatValue 57 $scale ]\" VAh"
+    # puts "TotVAhExpPhB : $(GetScaledUInt32FloatValue 59 $scale ]\" VAh"
+    # puts "TotVAhExpPnC : $(GetScaledUInt32FloatValue 61 $scale ]\" VAh"
+    # puts "TotVAhImp    : $(GetScaledUInt32FloatValue 63 $scale ]\" VAh"
+    # puts "TotVAhImpPhA : $(GetScaledUInt32FloatValue 65 $scale ]\" VAh"
+    # puts "TotVAhImpPhB : $(GetScaledUInt32FloatValue 67 $scale ]\" VAh"
+    # puts "TotVAhImpPhC : $(GetScaledUInt32FloatValue 69 $scale ]\" VAh"
+
+    # scale \"[ GetScaleFactor 104 ]\"
+    # puts "TotVArhImpQ1   : $(GetScaledUInt32FloatValue 72 $scale ]\" varh"
+    # puts "TotVArhImpQ1PhA: $(GetScaledUInt32FloatValue 74 $scale ]\" varh"
+    # puts "TotVArhImpQ1PhB: $(GetScaledUInt32FloatValue 76 $scale ]\" varh"
+    # puts "TotVArhImpQ1PhC: $(GetScaledUInt32FloatValue 78 $scale ]\" varh"
+    # puts "TotVArhImpQ2   : $(GetScaledUInt32FloatValue 80 $scale ]\" varh"
+    # puts "TotVArhImpQ2PhA: $(GetScaledUInt32FloatValue 82 $scale ]\" varh"
+    # puts "TotVArhImpQ2PhB: $(GetScaledUInt32FloatValue 84 $scale ]\" varh"
+    # puts "TotVArhImpQ2PhC: $(GetScaledUInt32FloatValue 86 $scale ]\" varh"
+    # puts "TotVArhExpQ3   : $(GetScaledUInt32FloatValue 88 $scale ]\" varh"
+    # puts "TotVArhExpQ3PhA: $(GetScaledUInt32FloatValue 90 $scale ]\" varh"
+    # puts "TotVArhExpQ3PhB: $(GetScaledUInt32FloatValue 92 $scale ]\" varh"
+    # puts "TotVArhExpQ3PhC: $(GetScaledUInt32FloatValue 94 $scale ]\" varh"
+    # puts "TotVArhExpQ4   : $(GetScaledUInt32FloatValue 96 $scale ]\" varh"
+    # puts "TotVArhExpQ4PhA: $(GetScaledUInt32FloatValue 98 $scale ]\" varh"
+    # puts "TotVArhExpQ4PhB: $(GetScaledUInt32FloatValue 100 $scale ]\" varh"
+    # puts "TotVArhExpQ4PhC: $(GetScaledUInt32FloatValue 102 $scale ]\" varh"
+        array set ::SE_modBus::dataArray $dataString
+        if { $::SE_modBus::dataArray(meterData_ID) != 203 } {
+            puts "meterData_ID : $::SE_modBus::dataArray(meterData_ID) (UNMATCHED - expected 203)"
+            exit 1
+        }
+        if { $::SE_modBus::dataArray(meterData_L) != 105 } {
+            puts "meterData_L  : $::SE_modBus::dataArray(meterData_L) (UNMATCHED - expected 105)"
+            exit 1
+        }
     }
 }
+
+foreach { item value } [ array get ::SE_modBus::dataArray ] {
+    puts "$item=$value"
+}
+
 #END

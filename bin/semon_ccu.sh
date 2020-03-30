@@ -37,13 +37,13 @@ SE_INTERVAL_TIME=${SE_INTERVAL_TIME:-}
 SE_INTERVAL_MAX=${SE_INTERVAL_MAX:-0}
 
 # List of values to log via CuXD.LOGIT: [text for CuXD]=name_of_var_in_script
-SE_LOGIT_VARS=${SE_LOGIT_VARS:-"([WR_Leistung_W]=inverterData_W [ME_Wh_export]=meterData_TotWhExp)"}
+SE_LOGIT_VARS=${SE_LOGIT_VARS:-"([WR_Leistung_W]=inverterData_W__W [ME_Wh_export]=meterData_TotWhExp)"}
 
 # Name of the CCU variable prefix used
 SE_CCU_PV_VAR=${SE_CCU_PV_VAR:-"SolarPV.SV_"}
 
 # Mapping of CCU variables updated - SE_CCU_PV_VAR is put in front of each variable
-SE_CCU_VARS=${SE_CCU_VARS:-"([WR_Leistung_W]=inverterData_W [ME_Wh_export]=meterData_TotWhExp)"}
+SE_CCU_VARS=${SE_CCU_VARS:-"([WR_Leistung_W]=inverterData_W__W [ME_Wh_export]=meterData_TotWhExp)"}
 
 # Level of variables read via ModBus
 SM_READ_FULL_DATA=${SM_READ_FULL_DATA:-false}
@@ -67,6 +67,10 @@ CONFIG_FILE=${CONFIG_FILE:-"$(cd "${0%/*}"; pwd)/semon_ccu.conf"}
 # global return status variables
 RETURN_FAILURE=1
 RETURN_SUCCESS=0
+
+# internal state variables
+SE_LAST_STATE=
+$inverterCalc_WH__Wh=0
 
 ###############################
 # now we check all dependencies first. That means we
@@ -350,7 +354,7 @@ function whichEnumID()
   echo ${result}
 }
 
-function ProcessCommonData() {
+function PrintCommonData() {
   echo "Found Inverter:"
   echo " ID : $inverterData_ID"
   echo " DID: $inverterData_DID"
@@ -373,7 +377,7 @@ function ProcessCommonData() {
   echo " DA : $meterData_DA"
 }
 
-function ProcessGeneralStatus() {
+function PrintGeneralStatus() {
   echo "Status Inverter:"
   echo " TmpSnk      : $inverterData_TmpSnk__C °C"
   echo " St          : $inverterData_St"
@@ -383,7 +387,7 @@ function ProcessGeneralStatus() {
   echo " Evt         : $meterData_Evt"
 }
 
-function ProcessBaseData() {
+function PrintBaseData() {
   echo "Measurements Inverter:"
   echo " A          : $inverterData_A__A A"
   echo " AphA       : $inverterData_AphA__A A"
@@ -411,7 +415,7 @@ function ProcessBaseData() {
   echo " TotWhImpPnC: $meterData_TotWhImpPnC__Wh Wh"
 }
 
-function ProcessFullData() {
+function PrintFullData() {
   echo "Measurements Inverter:"
   echo " A          : $inverterData_A__A A"
   echo " AphA       : $inverterData_AphA__A A"
@@ -472,6 +476,23 @@ function ProcessFullData() {
   echo " TotWhImpPnC: $meterData_TotWhImpPnC__Wh Wh" 
 }
 
+# Started when inverter-state changes to Sleeeping
+function ProcessStateChange_DayEnd() {
+  # store daily production
+  inverterCalc_WH__Wh = $inverterData_WH__Wh;
+}
+
+function ProcessData(){
+  if [ -z $SE_LAST_STATE] ]; then
+    SE_LAST_STATE = $inverterData_St
+  elif [ "$inverterData_St" -ne "$SE_LAST_STATE"]; then
+    if [ "$inverterData_St" -eq "Sleeping" ]; then
+      ProcessStateChange_DayEnd
+    fi
+    SE_LAST_STATE = $inverterData_St
+  fi
+}
+
 function ProcessCCUVariables() {
   echo "ProcessCCUVariables ${SE_CCU_VARS[@]} ${#SE_CCU_VARS[@]}"
   for sysvar in "${!SE_CCU_VARS[@]}"; do
@@ -503,7 +524,7 @@ function initial_action() {
     return ${RETURN_FAILURE}
   fi 
   ReadMeterCommonData
-  ProcessCommonData
+  PrintCommonData
   echo
 }
 
@@ -533,12 +554,15 @@ function run_semon()
   fi
   ClearBulkData
 
-  # Process the data
-  ProcessGeneralStatus
+  # Process the data (fix numbers, calculate value etc.)
+  ProcessData
+
+  # Print out to log / sysout
+  PrintGeneralStatus
   if [ "$SM_READ_FULL_DATA" == "true" ]; then
-    ProcessFullData
+    PrintFullData
   else
-    ProcessBaseData
+    PrintBaseData
   fi
   ProcessCCUVariables
 

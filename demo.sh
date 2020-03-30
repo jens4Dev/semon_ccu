@@ -184,6 +184,28 @@ function PrintMeterFullData() {
 # IsBulkAvailable
 # echo "1 = $?"
 
+GetUInt16Register $invCommonBlock 
+GetUInt16Register $((invCommonBlock + 1))
+GetUInt32Register $invCommonBlock
+GetStringRegister $(($invCommonBlock + 0)) 2
+GetUInt16Register $(($invCommonBlock + 2))
+GetUInt16Register $(($invCommonBlock + 3))
+GetStringRegister $(($invCommonBlock + 4)) 16
+GetStringRegister $(($invCommonBlock + 19)) 16
+
+
+GetUInt16Register $((invModel103Block + 0))
+GetUInt16Register $((invModel103Block + 1))
+scale=$(GetScaleFactor $((invModel103Block + 37)))
+GetScaledUInt16FloatValue $((invModel103Block + 34)) $scale
+   #inverterData_TmpTrns__C="$(GetScaledUInt16FloatValue $((invModel103Block + 35)) $scale)"  # seems unused
+    #inverterData_TmpOt__C="$(GetScaledUInt16FloatValue $((invModel103Block + 36)) $scale)"    # seems unused
+
+GetInverterOperatingState $((invModel103Block + 38))
+GetUInt16Register $((invModel103Block + 39))
+GetInverterErrorState $((invModel103Block + 40))
+scale=$(GetScaleFactor $((invModel103Block + 26)))
+GetScaledUInt32FloatValue $((invModel103Block + 24)) $scale
 # ReadBulkData $invModel103Block 50
 # IsBulkAvailable
 # echo "0 = $?"

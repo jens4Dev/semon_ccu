@@ -2,6 +2,11 @@
 #\
 exec tclsh "$0" ${1+"$@"}
 
+# TCL-lib to read and write ModBus (TCP)
+
+# based on https://github.com/andrey-nakin/tcl-measure/blob/master/thirdparty/modbus-tcl/modbus.tcl
+# changes by Indi55 published in https://homematic-forum.de/forum/viewtopic.php?f=31&t=55722&p=553720 (now working on eq3 Homematic CCU etc.)
+
 package provide modbus 1.0
 
 namespace eval ::modbus {

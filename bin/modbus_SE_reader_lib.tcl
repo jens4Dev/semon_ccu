@@ -45,8 +45,8 @@ proc ScaleValue {val scale} {
     if { $scale == "" } {
         scale=0
     }
-
-    if { $scale < 0 && $val > 0 } {
+    
+    if { $scale < 0 && $val != 0 } {
         set valLen [ string length $val ]
         set sepPos [ expr $valLen + $scale ]
 

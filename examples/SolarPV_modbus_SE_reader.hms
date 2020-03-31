@@ -1,0 +1,51 @@
+! SolarPV_modbus_SE_reader.hms - PV-Werte auslesen
+!
+! (c) jensDev
+
+! IP/hostname & Port separated by blank
+string ipPortSolarEdge = "target 502";
+
+dom.GetObject("CUxD.CUX2801001:6.CMD_SETS").State("tclsh /usr/local/addons/semon_ccu/bin/modbus_SE_reader.tcl " # ipPortSolarEdge # " Inverter HMSCRIPT");
+dom.GetObject("CUxD.CUX2801001:6.CMD_QUERY_RET").State(1);
+var datenInverter = dom.GetObject("CUxD.CUX2801001:6.CMD_RETS").State();
+
+dom.GetObject("CUxD.CUX2801001:6.CMD_SETS").State("tclsh /usr/local/addons/semon_ccu/bin/modbus_SE_reader.tcl " # ipPortSolarEdge # " Meter HMSCRIPT");
+dom.GetObject("CUxD.CUX2801001:6.CMD_QUERY_RET").State(1);
+var datenMeter = dom.GetObject("CUxD.CUX2801001:6.CMD_RETS").State();
+
+! Read Common-Data (name, type, serial number etc.)
+!dom.GetObject("CUxD.CUX2801001:6.CMD_SETS").State("tclsh /usr/local/addons/semon_ccu/bin/modbus_SE_reader.tcl " # ipPortSolarEdge # " CommonInv HMSCRIPT");
+!dom.GetObject("CUxD.CUX2801001:6.CMD_QUERY_RET").State(1);
+!var datenCInv = dom.GetObject("CUxD.CUX2801001:6.CMD_RETS").State();
+
+!dom.GetObject("CUxD.CUX2801001:6.CMD_SETS").State("tclsh /usr/local/addons/semon_ccu/bin/modbus_SE_reader.tcl " # ipPortSolarEdge # " CommonMeter HMSCRIPT");
+!dom.GetObject("CUxD.CUX2801001:6.CMD_QUERY_RET").State(1);
+!var datenCMeter = dom.GetObject("CUxD.CUX2801001:6.CMD_RETS").State();
+
+string tuple;
+foreach(tuple, datenInverter.Split("|")) 
+{
+   string item = tuple.StrValueByIndex("=", 0);
+   if ( (item == "inverterData_DCW__W") ||
+        (item == "inverterData_Evt1") ||
+        (item == "inverterData_St") ||
+        (item == "inverterData_WH__kWh") ||
+        (item == "inverterData_W__W") ) {
+      string value = tuple.StrValueByIndex("=", 1);
+      WriteLine(item#" "#value);
+   }
+}
+
+foreach(tuple, datenMeter.Split("|")) 
+{
+   string item = tuple.StrValueByIndex("=", 0);
+   if ( (item == "meterData_TotWhExp__kWh") ||
+        (item == "meterData_TotWhImp__kWh") ||
+        (item == "meterData_W__W") ||
+        (item == "meterData_WphA__W") ||
+        (item == "meterData_WphB__W") ||
+        (item == "meterData_WphC__W") ) {
+      string value = tuple.StrValueByIndex("=", 1);
+      WriteLine(item#" "#value);
+   }
+}

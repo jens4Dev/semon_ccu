@@ -107,9 +107,6 @@ switch -- [lindex $argv 2] {
                         inverterCData_SN \"[ GetStringRegister 50 16 ]\"
                         inverterCData_DA \"[ GetUInt16Register 66 ]\""
         array set ::SE_modBus::dataArray $dataString
-        foreach { item value } [ array get ::SE_modBus::dataArray ] {
-            puts "$item=$value"
-        }
     }
     "CommonMeter" {
         set dataString "

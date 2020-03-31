@@ -240,10 +240,30 @@ switch -- [lindex $argv 3] {
         foreach item [ lsort [ array names ::SE_modBus::dataArray ] ] {
             puts "$item=$::SE_modBus::dataArray($item)"
         }
-        puts "variables='[ lsort [ array names ::SE_modBus::dataArray ] ]'"
+        puts "variables[lindex $argv 2]='[ lsort [ array names ::SE_modBus::dataArray ] ]'"
     }
     "JSON"  {
-        puts "N/A"
+        puts "values[lindex $argv 2]={"
+        foreach item [ lsort [ array names ::SE_modBus::dataArray ] ] {
+            set val $::SE_modBus::dataArray($item)
+            if { [ string is double $val ] } {
+                puts "   \"$item\" : $val"
+            } else {
+                puts "   \"$item\" : \"$val\""
+            }
+        }
+        puts "}"
+        puts -nonewline "members[lindex $argv 2]=\["
+        set varList [ lsort [ array names ::SE_modBus::dataArray ] ]
+        set varCnt [ llength $varList ]
+        for {set ii 0} {$ii < $varCnt} {incr ii} {
+            if { $ii < [ expr $varCnt - 1]} {
+                puts -nonewline "\"$item\","
+            } else {
+                puts -nonewline "\"$item\""
+            }
+        }
+        puts "]"
     }
     default {
         puts "Unkown output format [lindex $argv 3]!"

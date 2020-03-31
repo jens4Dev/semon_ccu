@@ -15,8 +15,9 @@ if { $argc != 4 } {
   puts "     	CommonMeter - read Meter common block"
   puts "		Inverter    - read Inverter data block (SunSpec ID 103 with SE-changes..)"
   puts "		Meter       - read Meter data block (SunSpec ID 203)"
-  puts "Output  JSON - Output values in JSON-object plus array with member names"
-  puts "        SH   - Output values in baSH-parseable form"
+  puts "Output  JSON        - Output values in JSON-object plus array with member names"
+  puts "        SH          - Output values in baSH-parseable form"
+  puts "        HMSCRIPT    - Output values in HM-SCRIPT parseable form"
   puts ""
   puts "Please try again."
   exit 1
@@ -24,6 +25,20 @@ if { $argc != 4 } {
 
 # access object-members in JSON:
 # valuesMeter[membersMeter[0]]
+
+# use output for baSH-script:
+# eval $(bin/modbus_SE_reader.tcl target 502 Meter SH)
+
+# use in HMSCRIPT
+#string daten="meterData_A__A=2.4|meterData_AphA__A=1.1|meterData_AphB__A=0.4|";
+#string tuple;
+#foreach(tuple, data.Split("|")) 
+#{
+#   string item = tuple.StrValueByIndex("=", 0);
+#   string value = tuple.StrValueByIndex("=", 1);
+#   WriteLine(item#" "#value);
+#}
+
 
 # Modus TCP (always!)
 
@@ -273,6 +288,12 @@ switch -- [lindex $argv 3] {
             }
         }
         puts "]"
+    }
+    "HMSCRIPT" {
+        foreach item [ lsort [ array names ::SE_modBus::dataArray ] ] {
+            puts -nonewline "$item=$::SE_modBus::dataArray($item)|"
+        }
+        puts ""
     }
     default {
         puts "Unkown output format [lindex $argv 3]!"

@@ -61,7 +61,7 @@ switch -- [lindex $argv 2] {
         set len $meterModel203BlockLen
     }
     default {
-        puts "Unkown function [lindex $argv 3]!"
+        puts "Unkown function [lindex $argv 2]!"
         exit 1
     }
 }
@@ -235,8 +235,20 @@ switch -- [lindex $argv 2] {
     }
 }
 
-foreach item [ lsort [ array names ::SE_modBus::dataArray ] ] {
-    puts "$item=$::SE_modBus::dataArray($item)"
+switch -- [lindex $argv 3] {
+    "SH"    {
+        foreach item [ lsort [ array names ::SE_modBus::dataArray ] ] {
+            puts "$item=$::SE_modBus::dataArray($item)"
+        }
+        puts "variables='[ lsort [ array names ::SE_modBus::dataArray ] ]'"
+    }
+    "JSON"  {
+        puts "N/A"
+    }
+    default {
+        puts "Unkown output format [lindex $argv 3]!"
+        exit 1
+    }
 }
 
 #END

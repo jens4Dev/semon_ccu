@@ -152,7 +152,7 @@ function GetScaledUInt32FloatValue() {
     if [ "$scale" = "" ]; then
         scale=0
     fi
-    if [ $scale -lt 0 -a $val -gt 0 ]; then
+    if [ $scale -lt 0 -a $val -ne 0 ]; then
         local valLen=${#val}
         local sepPos=$(($valLen + $scale))
         if (( sepPos -eq 0 )); then 
@@ -177,7 +177,7 @@ function GetScaledUInt16FloatValue() {
     if [ "$scale" = "" ]; then
         scale=0
     fi
-    if [ $scale -lt  0 -a $val -gt 0 ]; then
+    if [ $scale -lt  0 -a $val -ne 0 ]; then
         local valLen=${#val}
         local sepPos=$(($valLen + $scale))
         if (( sepPos == 0 )); then 

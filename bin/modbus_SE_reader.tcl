@@ -152,7 +152,6 @@ switch -- [lindex $argv 2] {
         set scaleVAR "[ GetUInt16Register 32 ]"
         set scalePF "[ GetUInt16Register 37 ]"
         set scaleTotWh [expr [ GetUInt16Register 54 ] - 3 ]
-        set meterData_TotWhImpPhB__kWh "[ GetScaledUInt32FloatValue 50 $scaleTotWh ]"
 
         set dataString "meterData_ID \"[ GetUInt16Register 0 ]\"
                         meterData_L \"[ GetUInt16Register 1 ]\"
@@ -195,35 +194,35 @@ switch -- [lindex $argv 2] {
                         meterData_TotWhImpPnC__kWh \"[ GetScaledUInt32FloatValue 52 $scaleTotWh ]\"
                         meterData_Evt [ GetMeterErrorState 105 ]"
 
-    # looks unsed in WattNode SE-WND-3Y-400-MB
+    # looks unsed in WattNode SE-WND-3Y-400-MB - allways 0
+    # set scaleVAh [ GetUInt16Register 71 ]
+    # set scaleTotVarh [ GetUInt16Register 104 ]
 
-    # scale \"[ GetScaleFactor 71 ]\"
-    # puts "TotVAhExp    : $(GetScaledUInt32FloatValue 55 $scale ]\" VAh"
-    # puts "TotVAhExpPhA : $(GetScaledUInt32FloatValue 57 $scale ]\" VAh"
-    # puts "TotVAhExpPhB : $(GetScaledUInt32FloatValue 59 $scale ]\" VAh"
-    # puts "TotVAhExpPnC : $(GetScaledUInt32FloatValue 61 $scale ]\" VAh"
-    # puts "TotVAhImp    : $(GetScaledUInt32FloatValue 63 $scale ]\" VAh"
-    # puts "TotVAhImpPhA : $(GetScaledUInt32FloatValue 65 $scale ]\" VAh"
-    # puts "TotVAhImpPhB : $(GetScaledUInt32FloatValue 67 $scale ]\" VAh"
-    # puts "TotVAhImpPhC : $(GetScaledUInt32FloatValue 69 $scale ]\" VAh"
-
-    # scale \"[ GetScaleFactor 104 ]\"
-    # puts "TotVArhImpQ1   : $(GetScaledUInt32FloatValue 72 $scale ]\" varh"
-    # puts "TotVArhImpQ1PhA: $(GetScaledUInt32FloatValue 74 $scale ]\" varh"
-    # puts "TotVArhImpQ1PhB: $(GetScaledUInt32FloatValue 76 $scale ]\" varh"
-    # puts "TotVArhImpQ1PhC: $(GetScaledUInt32FloatValue 78 $scale ]\" varh"
-    # puts "TotVArhImpQ2   : $(GetScaledUInt32FloatValue 80 $scale ]\" varh"
-    # puts "TotVArhImpQ2PhA: $(GetScaledUInt32FloatValue 82 $scale ]\" varh"
-    # puts "TotVArhImpQ2PhB: $(GetScaledUInt32FloatValue 84 $scale ]\" varh"
-    # puts "TotVArhImpQ2PhC: $(GetScaledUInt32FloatValue 86 $scale ]\" varh"
-    # puts "TotVArhExpQ3   : $(GetScaledUInt32FloatValue 88 $scale ]\" varh"
-    # puts "TotVArhExpQ3PhA: $(GetScaledUInt32FloatValue 90 $scale ]\" varh"
-    # puts "TotVArhExpQ3PhB: $(GetScaledUInt32FloatValue 92 $scale ]\" varh"
-    # puts "TotVArhExpQ3PhC: $(GetScaledUInt32FloatValue 94 $scale ]\" varh"
-    # puts "TotVArhExpQ4   : $(GetScaledUInt32FloatValue 96 $scale ]\" varh"
-    # puts "TotVArhExpQ4PhA: $(GetScaledUInt32FloatValue 98 $scale ]\" varh"
-    # puts "TotVArhExpQ4PhB: $(GetScaledUInt32FloatValue 100 $scale ]\" varh"
-    # puts "TotVArhExpQ4PhC: $(GetScaledUInt32FloatValue 102 $scale ]\" varh"
+    # set dataString "$dataString TotVAhExp__VAh \" [ GetScaledUInt32FloatValue 55 $scaleVAh ]\"
+    #                             TotVAhExpPhA__VAh \" [ GetScaledUInt32FloatValue 57 $scaleVAh ]\"
+    #                             TotVAhExpPhB__VAh \" [ GetScaledUInt32FloatValue 59 $scaleVAh ]\"
+    #                             TotVAhExpPnC__VAh \" [ GetScaledUInt32FloatValue 61 $scaleVAh ]\"
+    #                             TotVAhImp__VAh    \" [ GetScaledUInt32FloatValue 63 $scaleVAh ]\"
+    #                             TotVAhImpPhA__VAh \" [ GetScaledUInt32FloatValue 65 $scaleVAh ]\"
+    #                             TotVAhImpPhB__VAh \" [ GetScaledUInt32FloatValue 67 $scaleVAh ]\"
+    #                             TotVAhImpPhC__VAh \" [ GetScaledUInt32FloatValue 69 $scaleVAh ]\"
+    #                             TotVArhImpQ1__varh   [ GetScaledUInt32FloatValue 72 $scaleTotVarh ]
+    #                             TotVArhImpQ1Ph__varh \" [ GetScaledUInt32FloatValue 74 $scaleTotVarh ]\"
+    #                             TotVArhImpQ1Ph__varh \" [ GetScaledUInt32FloatValue 76 $scaleTotVarh ]\"
+    #                             TotVArhImpQ1Ph__varh \" [ GetScaledUInt32FloatValue 78 $scaleTotVarh ]\"
+    #                             TotVArhImpQ2__varh   \" [ GetScaledUInt32FloatValue 80 $scaleTotVarh ]\"
+    #                             TotVArhImpQ2Ph__varh \" [ GetScaledUInt32FloatValue 82 $scaleTotVarh ]\"
+    #                             TotVArhImpQ2Ph__varh \" [ GetScaledUInt32FloatValue 84 $scaleTotVarh ]\"
+    #                             TotVArhImpQ2Ph__varh \" [ GetScaledUInt32FloatValue 86 $scaleTotVarh ]\"
+    #                             TotVArhExpQ3__varh   \" [ GetScaledUInt32FloatValue 88 $scaleTotVarh ]\"
+    #                             TotVArhExpQ3Ph__varh \" [ GetScaledUInt32FloatValue 90 $scaleTotVarh ]\"
+    #                             TotVArhExpQ3Ph__varh \" [ GetScaledUInt32FloatValue 92 $scaleTotVarh ]\"
+    #                             TotVArhExpQ3Ph__varh \" [ GetScaledUInt32FloatValue 94 $scaleTotVarh ]\"
+    #                             TotVArhExpQ4__varh   \" [ GetScaledUInt32FloatValue 96 $scaleTotVarh ]\"
+    #                             TotVArhExpQ4Ph__varh \" [ GetScaledUInt32FloatValue 98 $scaleTotVarh ]\"
+    #                             TotVArhExpQ4Ph__varh \" [ GetScaledUInt32FloatValue 100 $scaleTotVarh ]\"
+    #                             TotVArhExpQ4Ph__varh \" [ GetScaledUInt32FloatValue 102 $scaleTotVarh ]\""
+    
         array set ::SE_modBus::dataArray $dataString
         if { $::SE_modBus::dataArray(meterData_ID) != 203 } {
             puts "meterData_ID : $::SE_modBus::dataArray(meterData_ID) (UNMATCHED - expected 203)"
@@ -236,8 +235,8 @@ switch -- [lindex $argv 2] {
     }
 }
 
-foreach { item value } [ array get ::SE_modBus::dataArray ] {
-    puts "$item=$value"
+foreach item [ lsort [ array names ::SE_modBus::dataArray ] ] {
+    puts "$item=$::SE_modBus::dataArray($item)"
 }
 
 #END

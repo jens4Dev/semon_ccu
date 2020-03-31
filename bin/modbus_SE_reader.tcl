@@ -15,12 +15,15 @@ if { $argc != 4 } {
   puts "     	CommonMeter - read Meter common block"
   puts "		Inverter    - read Inverter data block (SunSpec ID 103 with SE-changes..)"
   puts "		Meter       - read Meter data block (SunSpec ID 203)"
-  puts "Output  JSON - Output values in JSON-array"
+  puts "Output  JSON - Output values in JSON-object plus array with member names"
   puts "        SH   - Output values in baSH-parseable form"
   puts ""
   puts "Please try again."
   exit 1
 }
+
+# access object-members in JSON:
+# valuesMeter[membersMeter[0]]
 
 # Modus TCP (always!)
 
@@ -243,20 +246,26 @@ switch -- [lindex $argv 3] {
         puts "variables[lindex $argv 2]='[ lsort [ array names ::SE_modBus::dataArray ] ]'"
     }
     "JSON"  {
+        set varList [ lsort [ array names ::SE_modBus::dataArray ] ]
+        set varCnt [ llength $varList ]
+
         puts "values[lindex $argv 2]={"
-        foreach item [ lsort [ array names ::SE_modBus::dataArray ] ] {
+        for {set ii 0} {$ii < $varCnt} {incr ii} {
+            set item [ lindex $varList $ii ]
             set val $::SE_modBus::dataArray($item)
             if { [ string is double $val ] } {
-                puts "   \"$item\" : $val"
+                puts -nonewline "   \"$item\" : $val"
             } else {
-                puts "   \"$item\" : \"$val\""
+                puts -nonewline "   \"$item\" : \"$val\""
+            }
+            if { $ii < [ expr $varCnt - 1]} {
+                puts ","
             }
         }
         puts "}"
         puts -nonewline "members[lindex $argv 2]=\["
-        set varList [ lsort [ array names ::SE_modBus::dataArray ] ]
-        set varCnt [ llength $varList ]
         for {set ii 0} {$ii < $varCnt} {incr ii} {
+            set item [ lindex $varList $ii ]
             if { $ii < [ expr $varCnt - 1]} {
                 puts -nonewline "\"$item\","
             } else {

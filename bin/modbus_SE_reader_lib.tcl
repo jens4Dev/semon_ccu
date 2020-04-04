@@ -83,7 +83,7 @@ proc GetInverterOperatingState {register} {
             return "Starting" }       
         "4"     { 
             # MPPT: Device is auto tracking maximum power point
-            return "Running" }        
+            return "On (MPPT)" }        
         "5"     { 
             # Device is operating at reduced power output
             return "Throttled" }      

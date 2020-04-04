@@ -4,7 +4,7 @@ exec tclsh "$0" ${1+"$@"}
 
 if { $argc != 4 } {
   puts ""
-  puts "The modbus_SE_reader.tcl script requires xx numbers to be given."
+  puts "The modbus_SE_reader.tcl script requires 4 parameters to be given."
   puts "(IP, Port, Function (Data-Block) and output-type for reading SolarEdge Inverter and Wattnode Meter."
   puts "For example: 192.168.178.35 502 Inverter SH"
   puts " "
@@ -18,7 +18,7 @@ if { $argc != 4 } {
   puts "Output  JSON        - Output values in JSON-object plus array with member names"
   puts "        SH          - Output values in baSH-parseable form"
   puts "        HMSCRIPT    - Output values in HM-SCRIPT parseable form"
-  puts ""
+  puts "        HUMAN       - Output (some) values in human friendly view"
   puts "Please try again."
   exit 1
 }
@@ -291,6 +291,47 @@ switch -- [lindex $argv 3] {
             puts -nonewline "$item=$::SE_modBus::dataArray($item)|"
         }
         puts ""
+    }
+    "HUMAN" {
+        switch -- [lindex $argv 2] {
+            "CommonInv" {
+            }
+            "CommonMeter" {
+            }
+            "Inverter" {
+                if { $::SE_modBus::dataArray(inverterData_W__W) > 0 } {
+                    set eff [ expr ($::SE_modBus::dataArray(inverterData_W__W) / $::SE_modBus::dataArray(inverterData_DCW__W)) * 100 ]
+                } else {
+                    set eff 0
+                }
+                puts ""
+                puts "INVERTER:"
+                puts "           Status: $::SE_modBus::dataArray(inverterData_St)"
+                puts ""
+                puts "Power Output (AC): [format %12.0f $::SE_modBus::dataArray(inverterData_W__W)] W"
+                puts " Power Input (DC): [format %12.0f $::SE_modBus::dataArray(inverterData_DCW__W)] W"
+                puts "       Efficiency: [format %12.2f $eff] %"
+                puts " Total Production: [format %12.3f $::SE_modBus::dataArray(inverterData_WH__kWh)] kWh"
+                puts "     Voltage (AC): [format %12.2f $::SE_modBus::dataArray(inverterData_PPVphA__V)] V ([format %2.2f $::SE_modBus::dataArray(inverterData_Hz__Hz)] Hz)"
+                puts "     Current (AC): [format %12.2f $::SE_modBus::dataArray(inverterData_A__A)] A"
+                puts "     Voltage (DC): [format %12.2f $::SE_modBus::dataArray(inverterData_DCV__V)] V"
+                puts "     Current (DC): [format %12.2f $::SE_modBus::dataArray(inverterData_DCA__A)] A"
+                puts "      Temperature: [format %12.2f $::SE_modBus::dataArray(inverterData_TmpSnk__C)] C (heatsink)"
+                puts ""
+            }
+            "Meter" {
+                puts ""
+                puts "METER:"
+                puts ""
+                puts "   Exported Energy: [format %12.3f $::SE_modBus::dataArray(meterData_TotWhImp__kWh)] kWh"
+	            puts "   Imported Energy: [format %12.3f $::SE_modBus::dataArray(meterData_TotWhExp__kWh)] kWh"
+	            puts "        Real Power: [format %12.0f $::SE_modBus::dataArray(meterData_W__W)] W"
+	            puts "    Apparent Power: [format %12.0f $::SE_modBus::dataArray(meterData_VA__VA)] VA"
+	            puts "      Power Factor: [format %12.3f $::SE_modBus::dataArray(meterData_PF__perct)] %"
+	            puts "      Voltage (AC): [format %12.2f $::SE_modBus::dataArray(meterData_PhV__V)] V ([format %.2f $::SE_modBus::dataArray(meterData_Hz__Hz)] Hz)"
+	            puts "      Current (AC): [format %12.2f $::SE_modBus::dataArray(meterData_A__A)] A"
+            }
+        }
     }
     default {
         puts "Unkown output format [lindex $argv 3]!"

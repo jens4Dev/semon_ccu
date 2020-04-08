@@ -1,0 +1,74 @@
+! SolarPV_modbus_SE_aktuell.hms - aktuelle PV-Werte auslesen
+!
+! (c) jensDev
+
+! IP/hostname & Port separated by blank
+string ipPortSolarEdge = "target 502";
+
+dom.GetObject("CUxD.CUX2801001:6.CMD_SETS").State("tclsh /usr/local/addons/semon_ccu/bin/modbus_SE_reader.tcl " # ipPortSolarEdge # " Inverter HMSCRIPT");
+dom.GetObject("CUxD.CUX2801001:6.CMD_QUERY_RET").State(1);
+var datenInverter = dom.GetObject("CUxD.CUX2801001:6.CMD_RETS").State();
+
+dom.GetObject("CUxD.CUX2801001:6.CMD_SETS").State("tclsh /usr/local/addons/semon_ccu/bin/modbus_SE_reader.tcl " # ipPortSolarEdge # " Meter HMSCRIPT");
+dom.GetObject("CUxD.CUX2801001:6.CMD_QUERY_RET").State(1);
+var datenMeter = dom.GetObject("CUxD.CUX2801001:6.CMD_RETS").State();
+
+integer einspeisung;
+integer verbrauch;
+integer pvLeistung;
+string event;
+string temp;
+string state;
+
+string tuple;
+foreach(tuple, datenInverter.Split("|")) 
+{
+   string item = tuple.StrValueByIndex("=", 0);
+   string value = tuple.StrValueByIndex("=", 1);
+   if (item == "inverterData_Evt1") {
+      event = tuple.StrValueByIndex("=", 1);
+   }
+   if (item == "inverterData_St") {
+      state = tuple.StrValueByIndex("=", 1);
+   }
+   if (item == "inverterData_W__W") {
+      pvLeistung = tuple.StrValueByIndex("=", 1).ToInteger();
+   }
+   if (item == "inverterData_TmpSnk__C") {
+      temp = tuple.StrValueByIndex("=", 1);
+   }
+}
+
+foreach(tuple, datenMeter.Split("|")) 
+{
+   string item = tuple.StrValueByIndex("=", 0);
+   if (item == "meterData_W__W") {
+      integer value = tuple.StrValueByIndex("=", 1).ToInteger();
+      ! Erzeugung größer als Verbrauch - Eigenverbrauch ist Differenz zw. PV und Einspeisung
+      if (pvLeistung > value) {
+         einspeisung = value;
+         verbrauch = pvLeistung - einspeisung;
+      } else {
+         einspeisung = 0;
+         verbrauch = pvLeistung + einspeisung;
+      }
+   } 
+}
+if (einspeisung > 0) {
+   state = state # " - Einspeisung aktiv";
+} else {
+   state = state # " - kein Überschuss";
+}
+string status = state # " - Kühler " # temp # "°C - Fehler: " # event;
+!WriteLine("Einspeisung: " # einspeisung # "W");
+!WriteLine("Verbrauch: " # verbrauch # "W");
+!WriteLine("PV-Erzeugung: " # pvLeistung # "W");
+!WriteLine("Status: " # status);
+(dom.GetObject(ID_SYSTEM_VARIABLES)).Get("SolarPV.SV_Einspeisung").State(einspeisung); 
+(dom.GetObject(ID_SYSTEM_VARIABLES)).Get("SolarPV.SV_Verbrauch").State(verbrauch); 
+(dom.GetObject(ID_SYSTEM_VARIABLES)).Get("SolarPV.SV_WR_Leistung").State(pvLeistung); 
+(dom.GetObject(ID_SYSTEM_VARIABLES)).Get("SolarPV.SV_WR_Status").State(status); 
+! Loggen für CUxD-Highcharts
+(dom.GetObject("CUxD.CUX2801001:1.LOGIT")).State("SolarPV_SV_Einspeisung;"#einspeisung);
+(dom.GetObject("CUxD.CUX2801001:1.LOGIT")).State("SolarPV_SV_Verbrauch;"#verbrauch);
+(dom.GetObject("CUxD.CUX2801001:1.LOGIT")).State("SolarPV_SV_WR_Leistung;"#pvLeistung);

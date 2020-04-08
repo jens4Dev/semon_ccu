@@ -312,7 +312,7 @@ switch -- [lindex $argv 3] {
             }
             "Inverter" {
                 if { $::SE_modBus::dataArray(inverterData_W__W) > 0 } {
-                    set eff [ expr ($::SE_modBus::dataArray(inverterData_W__W) / $::SE_modBus::dataArray(inverterData_DCW__W)) * 100 ]
+                    set eff [ expr ($::SE_modBus::dataArray(inverterData_W__W) * 100) / $::SE_modBus::dataArray(inverterData_DCW__W)]
                 } else {
                     set eff 0
                 }
@@ -335,8 +335,8 @@ switch -- [lindex $argv 3] {
                 puts ""
                 puts "METER:"
                 puts ""
-                puts "   Exported Energy: [format %12.3f $::SE_modBus::dataArray(meterData_TotWhImp__kWh)] kWh"
-	            puts "   Imported Energy: [format %12.3f $::SE_modBus::dataArray(meterData_TotWhExp__kWh)] kWh"
+                puts "   Exported Energy: [format %12.3f $::SE_modBus::dataArray(meterData_TotWhExp__kWh)] kWh"
+	            puts "   Imported Energy: [format %12.3f $::SE_modBus::dataArray(meterData_TotWhImp__kWh)] kWh"
 	            puts "        Real Power: [format %12.0f $::SE_modBus::dataArray(meterData_W__W)] W"
 	            puts "    Apparent Power: [format %12.0f $::SE_modBus::dataArray(meterData_VA__VA)] VA"
 	            puts "      Power Factor: [format %12.3f $::SE_modBus::dataArray(meterData_PF__perct)] %"

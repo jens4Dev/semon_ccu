@@ -115,7 +115,7 @@ foreach(tuple, data.Split("|"))
    WriteLine(item#" "#value);
 }
 ```
-Please look at an additional HM-Script in the examples.
+Please look at the additional HM-Scripts in folder "examples" - with SolarPV_modbus_SE_aktuell.hms I'm tracking the base values. Via CUxD-Highcharts it's possible to evaluate over the time.
 ##### JSON
 ```
 # bin/modbus_SE_reader.tcl target 502 Meter JSON

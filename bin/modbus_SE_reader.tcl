@@ -295,7 +295,6 @@ switch -- [lindex $argv 3] {
     "HUMAN" {
         switch -- [lindex $argv 2] {
             "CommonInv" {
-                puts ""
                 puts "INVERTER:"
                 puts "             Model: $::SE_modBus::dataArray(inverterCData_Mn) $::SE_modBus::dataArray(inverterCData_Md)"
                 puts "  Firmware version: $::SE_modBus::dataArray(inverterCData_Vr)"
@@ -303,7 +302,6 @@ switch -- [lindex $argv 3] {
                 puts ""
             }
             "CommonMeter" {
-                puts ""
                 puts "METER:"
                 puts "             Model: $::SE_modBus::dataArray(meterCData_Mn) $::SE_modBus::dataArray(meterCData_Md)"
                 puts "  Firmware version: $::SE_modBus::dataArray(meterCData_Vr)"
@@ -316,7 +314,6 @@ switch -- [lindex $argv 3] {
                 } else {
                     set eff 0
                 }
-                puts ""
                 puts "INVERTER:"
                 puts "           Status: $::SE_modBus::dataArray(inverterData_St)"
                 puts ""
@@ -332,7 +329,6 @@ switch -- [lindex $argv 3] {
                 puts ""
             }
             "Meter" {
-                puts ""
                 puts "METER:"
                 puts ""
                 puts "   Exported Energy: [format %12.3f $::SE_modBus::dataArray(meterData_TotWhExp__kWh)] kWh"

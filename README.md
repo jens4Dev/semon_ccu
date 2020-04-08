@@ -1,7 +1,7 @@
 ## eq3 / HomeMatic CCU based data logging for SolarEdge Inverters with Modbus Meter
 [![License](http://img.shields.io/:license-lgpl3-blue.svg?style=flat)](http://www.gnu.org/licenses/lgpl-3.0.html)
 
-This software was developed for our private PV device using a SolarEdge SE5K inverter in combination a with modbus-based meter WattNode SE-WND-3Y-400-MB. 
+This software was developed for our private PV-device using a SolarEdge SE5K inverter in combination a with modbus-based meter WattNode SE-WND-3Y-400-MB. 
 Meter and inverter are talking via a separate RS485-bus while the inverter is also connected to the LAN. Its ModBus TCP protocol allows you to read lots of parameters from both the inverter as well as the meter (for activation see below).
 SolarEdge implements (more or less) the SunSpec-Specification for this data - see the links section below.
 

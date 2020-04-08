@@ -1,13 +1,13 @@
-## eq3 / HomeMatic CCU based data logging for SolarEdge Inverters with Modbus Meter
+## eq3 / HomeMatic CCU based data logging for SolarEdge Inverters with ModBus Meter
 [![License](http://img.shields.io/:license-lgpl3-blue.svg?style=flat)](http://www.gnu.org/licenses/lgpl-3.0.html)
 
-This software was developed for our private PV-device using a SolarEdge SE5K inverter in combination a with modbus-based meter WattNode SE-WND-3Y-400-MB. 
+This software was developed for our private PV-device using a SolarEdge SE5K inverter in combination a with ModBus-based meter WattNode SE-WND-3Y-400-MB. 
 Meter and inverter are talking via a separate RS485-bus while the inverter is also connected to the LAN. Its ModBus TCP protocol allows you to read lots of parameters from both the inverter as well as the meter (for activation see below).
 SolarEdge implements (more or less) the SunSpec-Specification for this data - see the links section below.
 
 Features:
 * Read measurements and command data from inverter and meter
-* Interfaces to different use cases like: Shell-scripts, Homematic Script (HMScript), JSON or just human readable
+* Interfaces to different use cases like: Shell-scripts, HomeMatic Script (HMScript), JSON or just human readable
 * Low CPU-footprint (for CCU2..)
 * Open for extension, e.g. list of output variables is easily extendable (no fixed list of variables as far as possible) 
 
@@ -44,7 +44,7 @@ Features:
 ```
 
 ### Detailed description
-With this scripts I'm monitoring the data of both units with my eq3 / HomeMatic CCU2 (yeah, the old one ;-)). Reading the Modbus is done via Tcl-scripts - the base library (modbus.tcl) is from [homematic-forum.de](https://homematic-forum.de/forum/viewtopic.php?f=31&t=55722&p=553720). I added the modbus_SE_reader_lib.tcl to read and interpret the data and the modbus_SE_reader.tcl as a command-line interface, which outputs the data in an easy to use format for usage in HM-scripts, Bash-scripts, JSON or just for human beings. 
+With this scripts I'm monitoring the data of both units with my eq3 / HomeMatic CCU2 (yeah, the old one ;-)). Reading the ModBus is done via Tcl-scripts - the base library (modbus.tcl) is from [homematic-forum.de](https://homematic-forum.de/forum/viewtopic.php?f=31&t=55722&p=553720). I added the modbus_SE_reader_lib.tcl to read and interpret the data and the modbus_SE_reader.tcl as a command-line interface, which outputs the data in an easy to use format for usage in HM-scripts, Bash-scripts, JSON or just for human beings. 
 You can choose whether you want to read
 1. Common data like the model, serial numbers, etc. from inverter or meter or
 2. Measurements from inverter or meter.
@@ -219,7 +219,7 @@ user    0m 0.20s
 sys     0m 0.07s  
 
 ### Contributions
-* Thanks to Indi55 from homematic-forum.de for the [script to read from modbus TCP](https://homematic-forum.de/forum/viewtopic.php?f=31&t=55722&p=553720). Please note his cudos to "Andrey-Nakin".
+* Thanks to Indi55 from homematic-forum.de for the [script to read from ModBus TCP](https://homematic-forum.de/forum/viewtopic.php?f=31&t=55722&p=553720). Please note his cudos to "Andrey-Nakin".
 
 ### Activation of ModBus TCP
 ModBus TCP can be activated in the settings of the SE inverter. **The setting is reachable without opening the inverter** - just press the display key long and you enter the settings menu. 

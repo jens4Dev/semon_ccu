@@ -295,8 +295,20 @@ switch -- [lindex $argv 3] {
     "HUMAN" {
         switch -- [lindex $argv 2] {
             "CommonInv" {
+                puts ""
+                puts "INVERTER:"
+                puts "             Model: $::SE_modBus::dataArray(inverterCData_Mn) $::SE_modBus::dataArray(inverterCData_Md)"
+                puts "  Firmware version: $::SE_modBus::dataArray(inverterCData_Vr)"
+                puts "     Serial Number: $::SE_modBus::dataArray(inverterCData_SN)"
+                puts ""
             }
             "CommonMeter" {
+                puts ""
+                puts "METER:"
+                puts "             Model: $::SE_modBus::dataArray(meterCData_Mn) $::SE_modBus::dataArray(meterCData_Md)"
+                puts "  Firmware version: $::SE_modBus::dataArray(meterCData_Vr)"
+                puts "     Serial Number: $::SE_modBus::dataArray(meterCData_SN)"
+                puts ""
             }
             "Inverter" {
                 if { $::SE_modBus::dataArray(inverterData_W__W) > 0 } {
@@ -330,6 +342,7 @@ switch -- [lindex $argv 3] {
 	            puts "      Power Factor: [format %12.3f $::SE_modBus::dataArray(meterData_PF__perct)] %"
 	            puts "      Voltage (AC): [format %12.2f $::SE_modBus::dataArray(meterData_PhV__V)] V ([format %.2f $::SE_modBus::dataArray(meterData_Hz__Hz)] Hz)"
 	            puts "      Current (AC): [format %12.2f $::SE_modBus::dataArray(meterData_A__A)] A"
+                puts ""
             }
         }
     }

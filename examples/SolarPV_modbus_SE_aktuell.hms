@@ -44,13 +44,12 @@ foreach(tuple, datenMeter.Split("|"))
    string item = tuple.StrValueByIndex("=", 0);
    if (item == "meterData_W__W") {
       integer value = tuple.StrValueByIndex("=", 1).ToInteger();
-      ! Erzeugung größer als Verbrauch - Eigenverbrauch ist Differenz zw. PV und Einspeisung
-      if (pvLeistung > value) {
+      ! Messwert ist negativ bei Strombezug aus dem Netz - positiv bei Einspeisung
+      verbrauch = pvLeistung - value;
+      if (value > 0) {
          einspeisung = value;
-         verbrauch = pvLeistung - einspeisung;
       } else {
          einspeisung = 0;
-         verbrauch = pvLeistung + einspeisung;
       }
    } 
 }

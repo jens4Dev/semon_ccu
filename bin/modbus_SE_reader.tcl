@@ -11,14 +11,16 @@ if { $argc != 4 } {
   puts "Output comes in a parseable form for different languages - JSON or SH ((bash-)shell)  "
   puts "IP/FQDN DNS-hostname or IP-adress of SolarEdge Inverter"
   puts "Port 	client port for ModBus TCP"
-  puts "Func 	CommonInv   - read Inverter common block"
-  puts "     	CommonMeter - read Meter common block"
-  puts "        Inverter    - read Inverter data block (SunSpec ID 103 with SE-changes..)"
-  puts "        Meter       - read Meter data block (SunSpec ID 203)"
-  puts "Output  JSON        - Output values in JSON-object plus array with member names"
-  puts "        SH          - Output values in baSH-parseable form"
-  puts "        HMSCRIPT    - Output values in HM-SCRIPT parseable form"
-  puts "        HUMAN       - Output (some) values in human friendly view"
+  puts "Func 	CommonInv    - read Inverter common block"
+  puts "     	CommonMeter  - read Meter common block"
+  puts "        Inverter     - read subset of Inverter data block (SunSpec ID 103 with SE-changes..)"
+  puts "        Meter        - read subset of Meter data block (SunSpec ID 203)"
+  puts "        InverterFull - read Iverter data block (SunSpec ID 103 with SE-changes..)"
+  puts "        MeterFull    - read Meter data block (SunSpec ID 203)"
+  puts "Output  JSON         - Output values in JSON-object plus array with member names"
+  puts "        SH           - Output values in baSH-parseable form"
+  puts "        HMSCRIPT     - Output values in HM-SCRIPT parseable form"
+  puts "        HUMAN        - Output (some) values in human friendly view"
   puts "Please try again."
   exit 1
 }
@@ -70,10 +72,12 @@ switch -- [lindex $argv 2] {
         set block $meterCommonBlock
         set len $meterCommonBlockLen
     }
+    "InverterFull" -
     "Inverter" {
         set block $invModel103Block
         set len $invModel103BlockLen
     }
+    "MeterFull" -
     "Meter" {
         set block $meterModel203Block
         set len $meterModel203BlockLen
@@ -123,6 +127,23 @@ switch -- [lindex $argv 2] {
     "Inverter" {
         set scale_A [ GetUInt16Register 6 ]
         set scale_PPV [ GetUInt16Register 13 ]
+        set dataString "inverterData_A__A \"[ GetScaledUInt16FloatValue 2 $scale_A ]\"
+                        inverterData_PPVphA__V \"[ GetScaledUInt16FloatValue 10 $scale_PPV ]\"
+                        inverterData_W__W [ GetScaledUInt16FloatValue 14 [ GetUInt16Register 15 ] ]
+                        inverterData_Hz__Hz [ GetScaledUInt16FloatValue 16 [ GetUInt16Register 17 ] ]
+                        inverterData_WH__kWh [ GetScaledUInt32FloatValue 24 [ expr [ GetUInt16Register 26 ] -3 ] ]
+                        inverterData_DCA__A [ GetScaledUInt16FloatValue 27 [ GetUInt16Register 28 ] ]
+                        inverterData_DCV__V [ GetScaledUInt16FloatValue 29 [ GetUInt16Register 30 ] ]
+                        inverterData_DCW__W [ GetScaledUInt16FloatValue 31 [ GetUInt16Register 32 ] ]
+                        inverterData_TmpSnk__C [ GetScaledUInt16FloatValue 34 [ GetUInt16Register 37 ] ]
+                        inverterData_St \"[ GetInverterOperatingState 38 ]\"
+                        inverterData_StVnd \"[ GetUInt16Register 39 ]\"
+                        inverterData_Evt1 \"[ GetInverterErrorState 40 ]\""
+        array set ::SE_modBus::dataArray $dataString
+    }
+    "InverterFull" {
+        set scale_A [ GetUInt16Register 6 ]
+        set scale_PPV [ GetUInt16Register 13 ]
         # inverterData_TmpSnk__C is officially optional but filled in SE - register 33 is mandatory but not used..
         set dataString "inverterData_ID \"[ GetUInt16Register 0 ]\"
                         inverterData_L \"[ GetUInt16Register 1 ]\"
@@ -150,6 +171,7 @@ switch -- [lindex $argv 2] {
                         inverterData_StVnd \"[ GetUInt16Register 39 ]\"
                         inverterData_Evt1 \"[ GetInverterErrorState 40 ]\""
         array set ::SE_modBus::dataArray $dataString
+
         if { $::SE_modBus::dataArray(inverterData_ID) != 103 } {
             puts "inverterData_ID : $::SE_modBus::dataArray(inverterData_ID) (UNMATCHED - expected 103)"
             exit 1
@@ -160,6 +182,24 @@ switch -- [lindex $argv 2] {
         }
     }
     "Meter" {
+        set scaleA "[ GetUInt16Register 6 ]"
+        set scalePhV "[ GetUInt16Register 15 ]"
+        set scaleW "[ GetUInt16Register 22 ]"
+        set scaleVA "[ GetUInt16Register 27 ]"
+        set scalePF "[ GetUInt16Register 37 ]"
+        set scaleTotWh [expr [ GetUInt16Register 54 ] - 3 ]
+        set dataString "meterData_A__A \"[ GetScaledUInt16FloatValue 2 $scaleA ]\"
+                        meterData_PhV__V \"[ GetScaledUInt16FloatValue 7 $scalePhV ]\"
+                        meterData_Hz__Hz [ GetScaledUInt16FloatValue 16 [ GetUInt16Register 17 ] ]
+                        meterData_W__W \"[ GetScaledUInt16FloatValue 18 $scaleW ]\"
+                        meterData_VA__VA \"[ GetScaledUInt16FloatValue 23 $scaleVA ]\"
+                        meterData_PF__perct \"[ GetScaledUInt16FloatValue 33 $scalePF ]\"
+                        meterData_TotWhExp__kWh \"[ GetScaledUInt32FloatValue 38 $scaleTotWh ]\"
+                        meterData_TotWhImp__kWh \"[ GetScaledUInt32FloatValue 46 $scaleTotWh ]\"
+                        meterData_Evt [ GetMeterErrorState 105 ]"
+        array set ::SE_modBus::dataArray $dataString                        
+    }
+    "MeterFull" {
         set scaleA "[ GetUInt16Register 6 ]"
         set scalePhV "[ GetUInt16Register 15 ]"
         set scaleW "[ GetUInt16Register 22 ]"
@@ -239,6 +279,7 @@ switch -- [lindex $argv 2] {
     #                             TotVArhExpQ4Ph__varh \" [ GetScaledUInt32FloatValue 102 $scaleTotVarh ]\""
     
         array set ::SE_modBus::dataArray $dataString
+
         if { $::SE_modBus::dataArray(meterData_ID) != 203 } {
             puts "meterData_ID : $::SE_modBus::dataArray(meterData_ID) (UNMATCHED - expected 203)"
             exit 1
@@ -308,7 +349,8 @@ switch -- [lindex $argv 3] {
                 puts "     Serial Number: $::SE_modBus::dataArray(meterCData_SN)"
                 puts ""
             }
-            "Inverter" {
+            "Inverter" -
+            "InverterFull" {
                 if { $::SE_modBus::dataArray(inverterData_W__W) > 0 } {
                     set eff [ expr ($::SE_modBus::dataArray(inverterData_W__W) * 100) / $::SE_modBus::dataArray(inverterData_DCW__W)]
                 } else {
@@ -328,7 +370,8 @@ switch -- [lindex $argv 3] {
                 puts "      Temperature: [format %12.2f $::SE_modBus::dataArray(inverterData_TmpSnk__C)] C (heatsink)"
                 puts ""
             }
-            "Meter" {
+            "Meter" -
+            "MeterFull" {
                 puts "METER:"
                 puts ""
                 puts "   Exported Energy: [format %12.3f $::SE_modBus::dataArray(meterData_TotWhExp__kWh)] kWh"

@@ -213,10 +213,11 @@ eval $(bin/modbus_SE_reader.tcl target 502 Meter SH)
 ```
 #### Performance
 Tcl is fast enough also on the old CCU2, the reader_lib also reads a data block in one request, this way it is not a real difference whether you want one or ten values. Getting data from inverter and meter take a second request & parse. But at all, it more than good enough IMHO.  
-Sample of time `bin/modbus_SE_reader.tcl target 502 Meter HUMAN`:  
+Sample of time `bin/modbus_SE_reader.tcl target 502 MeterFull HUMAN`:  
 real    0m 0.27s  
 user    0m 0.20s  
 sys     0m 0.07s  
+Using Meter / Inverter instead of MeterFull / InverterFull also reduces load if you don't need special values (due to the dynamic design, it's not a problem to add or remove specific values in the reading-section (switch), output changes w/o adaption).
 
 ### Contributions
 * Thanks to Indi55 from homematic-forum.de for the [script to read from ModBus TCP](https://homematic-forum.de/forum/viewtopic.php?f=31&t=55722&p=553720). Please note his cudos to "Andrey-Nakin".
@@ -233,3 +234,7 @@ I read some posts stating that you should not wait to long for the first connect
 
 #### Other SunSpec / SE-Monitoring Solutions
 * [SunSpec-Monitor, Perl-based](https://github.com/tjko/sunspec-monitor)
+
+### Tcl Reference
+* [Tcl Reference Manual](http://tmml.sourceforge.net/doc/tcl/index.html)
+* [Tcl/Tk Tutorial](https://www.tutorialspoint.com/tcl-tk/index.htm)

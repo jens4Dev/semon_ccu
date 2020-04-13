@@ -1,6 +1,6 @@
 ## eq3 / HomeMatic CCU-basierte Datenprotokollierung für SolarEdge-Wechselrichter mit ModBus-Zähler
 [![License](http://img.shields.io/:license-lgpl3-blue.svg?style=flat)](http://www.gnu.org/licenses/lgpl-3.0.html)
-[english README.md](README.md)
+[english README.md](README.en.md)
 
 Diese Software wurde für unser privates PV-System mit einem SolarEdge SE5K-Wechselrichter in Kombination mit einem ModBus-basierten Zähler WattNode SE-WND-3Y-400-MB entwickelt. 
 Zähler und Wechselrichter kommunizieren über einen separaten RS485-Bus, während der Wechselrichter zusätzlich mit dem LAN verbunden ist. Damit können über das ModBus-TCP-Protokoll viele Parameter sowohl vom Wechselrichter als auch vom Zähler ausgelesen werden (zur [Aktivierung von ModBus-TCP siehe unten](#Aktivierung-von-ModBus-TCP)).

@@ -2,14 +2,16 @@
 [![License](http://img.shields.io/:license-lgpl3-blue.svg?style=flat)](http://www.gnu.org/licenses/lgpl-3.0.html)
 
 This software was developed for our private PV-device using a SolarEdge SE5K inverter in combination a with ModBus-based meter WattNode SE-WND-3Y-400-MB. 
-Meter and inverter are talking via a separate RS485-bus while the inverter is also connected to the LAN. Its ModBus TCP protocol allows you to read lots of parameters from both the inverter as well as the meter (for activation see below).
+Meter and inverter are talking via a separate RS485-bus while the inverter is also connected to the LAN. Its ModBus TCP protocol allows you to read lots of parameters from both the inverter as well as the meter (for activation of ModBus TCP see below).
 SolarEdge implements (more or less) the SunSpec-Specification for this data - see the links section below.
 
 Features:
-* Read measurements and command data from inverter and meter
-* Interfaces to different use cases like: Shell-scripts, HomeMatic Script (HMScript), JSON or just human readable
-* Low CPU-footprint (for CCU2..)
+* Reads measurements and command data from inverter and meter
+* Flexible: reads data & deliver data for multiple blocks in one call
+* Multi-purpose: Interfaces to different use cases like Shell-scripts, HomeMatic Script (HMScript), JSON or just human readable
+* Reads full or reduced data blocks
 * Open for extension, e.g. list of output variables is easily extendable (no fixed list of variables as far as possible) 
+* Low CPU-footprint (especially for CCU2..)
 
 ### Meter and Inverter Communication
 ```
@@ -44,34 +46,38 @@ Features:
 ```
 
 ### Detailed description
-With this scripts I'm monitoring the data of both units with my eq3 / HomeMatic CCU2 (yeah, the old one ;-)). Reading the ModBus is done via Tcl-scripts - the base library (modbus.tcl) is from [homematic-forum.de](https://homematic-forum.de/forum/viewtopic.php?f=31&t=55722&p=553720). I added the modbus_SE_reader_lib.tcl to read and interpret the data and the modbus_SE_reader.tcl as a command-line interface, which outputs the data in an easy to use format for usage in HM-scripts, Bash-scripts, JSON or just for human beings. 
+With this scripts I'm monitoring the data of both units with my eq3 / HomeMatic CCU2 (yeah, the old one ;-)). Reading the ModBus is done via Tcl-scripts - the base library (modbus.tcl) is from [homematic-forum.de](https://homematic-forum.de/forum/viewtopic.php?f=31&t=55722&p=553720). I added the modbus_SE_reader_lib.tcl to read and interpret the data and the modbus_SE_reader.tcl as a (new) command-line interface, which outputs the data in an easy to use format for usage in HM-scripts, Bash-scripts, JSON or just for human beings. 
 You can choose whether you want to read
-1. Common data like the model, serial numbers, etc. from inverter or meter or
+1. Common data like the model, serial numbers, etc. from inverter or meter or / and
 2. Measurements from inverter or meter.
 
-For Bash and JSON the data is printed in an array and additionally the used parameters names are given in list. For HM-scripts you get only name-value pairs.
+For Bash and JSON the data is printed in an array and additionally the used parameters names are given in list. For HM-scripts you only get name-value pairs.
 
 Please note: My SE5K is using SunSpec mapping 103, the meter 203 - for this mapping the modbus_SE_reader_lib.tcl is written - plus one or two specifics of the inverter (for me it looks like not 100% following the specs). If necessary it should be open enough to map more types.
 
 #### Invocation
 ```
-The modbus_SE_reader.tcl script requires 4 parameters to be given.
-(IP, Port, Function (Data-Block) and output-type for reading SolarEdge Inverter and Wattnode Meter.  
-For example: 192.168.178.35 502 Inverter SH  
-  
+The modbus_SE_reader.tcl script requires at least 4 parameters to be given.
+(IP, Port, Function (Data-Block) and output-type for reading SolarEdge Inverter and Wattnode Meter.
+For example: 192.168.178.35 502 Inverter SH
+ 
 Output comes in a parseable form for different languages - JSON or SH ((bash-)shell)  
 IP/FQDN DNS-hostname or IP-adress of SolarEdge Inverter
-Port    client port for ModBus TCP  
-Func    CommonInv   - read Inverter common block  
-        CommonMeter - read Meter common block  
-        Inverter    - read Inverter data block (SunSpec ID 103 with SE-changes..)  
-        Meter       - read Meter data block (SunSpec ID 203)  
-Output  JSON        - Output values in JSON-object plus array with member names  
-        SH          - Output values in baSH-parseable form  
-        HMSCRIPT    - Output values in HM-SCRIPT parseable form  
-        HUMAN       - Output (some) values in human friendly view  
+Port    client port for ModBus TCP
+Func    CommonInv    - read Inverter common block
+        CommonMeter  - read Meter common block
+        Inverter     - read subset of Inverter data block (SunSpec ID 103 with SE-changes..)
+        Meter        - read subset of Meter data block (SunSpec ID 203)
+        InverterFull - read Iverter data block (SunSpec ID 103 with SE-changes..)
+        MeterFull    - read Meter data block (SunSpec ID 203)
+ -> Func can be repeated as much as neccessary to read multiple block at once
+Output  JSON         - Output values in JSON-object plus array with member names
+        SH           - Output values in baSH-parseable form
+        HMSCRIPT     - Output values in HM-SCRIPT parseable form
+        HUMAN        - Output (some) values in human friendly view
+Please try again.
 ```
-For the computable output the variable names were build in the following scheme.
+For the computable output the variable names were build in the following scheme:
 1. Depending on the function:
    * inverterCData  OR
    * meterCData     OR
@@ -104,7 +110,7 @@ METER:
 # modbus_SE_reader.tcl target 502 Meter HMSCRIPT
 meterData_A__A=2.1|meterData_AphA__A=0.7|meterData_AphB__A=0.5|meterData_AphC__A=0.8|meterData_Evt=None|meterData_Hz__Hz=49.97|meterData_ID=203|meterData_L=105|meterData_PF__perct=57.51|meterData_PFphA__perct=86.26|meterData_PFphB__perct=23.04|meterData_PFphC__perct=63.23|meterData_PPV__V=-247.30|meterData_PVphC__V=235.72|meterData_PhV__V=235.22|meterData_PhVphAB__V=-247.56|meterData_PhVphA__V=235.22|meterData_PhVphBC__V=-246.88|meterData_PhVphB__V=235.86|meterData_PhVphCA__V=-247.46|meterData_TotWhExpPhA__kWh=-25.112|meterData_TotWhExpPhB__kWh=20.263|meterData_TotWhExpPnC__kWh=-20.459|meterData_TotWhExp__kWh=37.306|meterData_TotWhImpPhA__kWh=23.147|meterData_TotWhImpPhB__kWh=24.370|meterData_TotWhImpPnC__kWh=21.225|meterData_TotWhImp__kWh=65.822|meterData_VAR__var=-291|meterData_VARphA__var=-65|meterData_VARphB__var=-113|meterData_VARphC__var=-112|meterData_VA__VA=432|meterData_VAphA__VA=175|meterData_VAphB__VA=117|meterData_VAphC__VA=169|meterData_W__W=319|meterData_WphA__W=162|meterData_WphB__W=29|meterData_WphC__W=127|
 ```
-HM-Script to use the data:
+Simple HM-Script to use the data (just print..):
 ```javascript
 string daten="meterData_A__A=2.4|meterData_AphA__A=1.1|meterData_AphB__A=0.4|";
 string tuple;
@@ -118,8 +124,8 @@ foreach(tuple, data.Split("|"))
 Please look at the additional HM-Scripts in folder "examples" - with SolarPV_modbus_SE_aktuell.hms I'm tracking the base values. Via CUxD-Highcharts it's possible to evaluate over the time.
 ##### JSON
 ```
-# bin/modbus_SE_reader.tcl target 502 Meter JSON
-valuesMeter={
+# bin/modbus_SE_reader.tcl target 502 MeterFull JSON
+values={
    "meterData_A__A" : 2.0,
    "meterData_AphA__A" : 0.6,
    "meterData_AphB__A" : 0.5,
@@ -160,64 +166,45 @@ valuesMeter={
    "meterData_WphA__W" : 133,
    "meterData_WphB__W" : 28,
    "meterData_WphC__W" : 113}
-membersMeter=["meterData_A__A","meterData_AphA__A","meterData_AphB__A","meterData_AphC__A","meterData_Evt","meterData_Hz__Hz","meterData_ID","meterData_L","meterData_PF__perct","meterData_PFphA__perct","meterData_PFphB__perct","meterData_PFphC__perct","meterData_PPV__V","meterData_PVphC__V","meterData_PhV__V","meterData_PhVphAB__V","meterData_PhVphA__V","meterData_PhVphBC__V","meterData_PhVphB__V","meterData_PhVphCA__V","meterData_TotWhExpPhA__kWh","meterData_TotWhExpPhB__kWh","meterData_TotWhExpPnC__kWh","meterData_TotWhExp__kWh","meterData_TotWhImpPhA__kWh","meterData_TotWhImpPhB__kWh","meterData_TotWhImpPnC__kWh","meterData_TotWhImp__kWh","meterData_VAR__var","meterData_VARphA__var","meterData_VARphB__var","meterData_VARphC__var","meterData_VA__VA","meterData_VAphA__VA","meterData_VAphB__VA","meterData_VAphC__VA","meterData_W__W","meterData_WphA__W","meterData_WphB__W","meterData_WphC__W"]
+members=["meterData_A__A","meterData_AphA__A","meterData_AphB__A","meterData_AphC__A","meterData_Evt","meterData_Hz__Hz","meterData_ID","meterData_L","meterData_PF__perct","meterData_PFphA__perct","meterData_PFphB__perct","meterData_PFphC__perct","meterData_PPV__V","meterData_PVphC__V","meterData_PhV__V","meterData_PhVphAB__V","meterData_PhVphA__V","meterData_PhVphBC__V","meterData_PhVphB__V","meterData_PhVphCA__V","meterData_TotWhExpPhA__kWh","meterData_TotWhExpPhB__kWh","meterData_TotWhExpPnC__kWh","meterData_TotWhExp__kWh","meterData_TotWhImpPhA__kWh","meterData_TotWhImpPhB__kWh","meterData_TotWhImpPnC__kWh","meterData_TotWhImp__kWh","meterData_VAR__var","meterData_VARphA__var","meterData_VARphB__var","meterData_VARphC__var","meterData_VA__VA","meterData_VAphA__VA","meterData_VAphB__VA","meterData_VAphC__VA","meterData_W__W","meterData_WphA__W","meterData_WphB__W","meterData_WphC__W"]
 ```
 ##### (BA)SH
 ```
-# bin/modbus_SE_reader.tcl target 502 Meter SH
-meterData_A__A=1.9
-meterData_AphA__A=0.6
-meterData_AphB__A=0.5
-meterData_AphC__A=0.7
+# bin/modbus_SE_reader.tcl target 502 Meter Inverter SH
+inverterData_A__A=0
+inverterData_DCA__A=0
+inverterData_DCV__V=15.2
+inverterData_DCW__W=0
+inverterData_Evt1=None
+inverterData_Hz__Hz=50.02
+inverterData_PPVphA__V=234.9
+inverterData_St=Off
+inverterData_StVnd=0
+inverterData_TmpSnk__C=29.50
+inverterData_WH__kWh=0
+inverterData_W__W=0
+meterData_A__A=2.2
 meterData_Evt=None
-meterData_Hz__Hz=49.98
-meterData_ID=203
-meterData_L=105
-meterData_PF__perct=54.41
-meterData_PFphA__perct=83.78
-meterData_PFphB__perct=22.39
-meterData_PFphC__perct=57.07
-meterData_PPV__V=-249.49
-meterData_PVphC__V=234.12
-meterData_PhV__V=234.05
-meterData_PhVphAB__V=-248.99
-meterData_PhVphA__V=234.05
-meterData_PhVphBC__V=-249.62
-meterData_PhVphB__V=234.84
-meterData_PhVphCA__V=-249.86
-meterData_TotWhExpPhA__kWh=-25.050
-meterData_TotWhExpPhB__kWh=20.275
-meterData_TotWhExpPnC__kWh=-20.402
-meterData_TotWhExp__kWh=37.439
-meterData_TotWhImpPhA__kWh=23.147
-meterData_TotWhImpPhB__kWh=24.370
-meterData_TotWhImpPnC__kWh=21.225
-meterData_TotWhImp__kWh=65.822
-meterData_VAR__var=-284
-meterData_VARphA__var=-62
-meterData_VARphB__var=-113
-meterData_VARphC__var=-109
-meterData_VA__VA=384
-meterData_VAphA__VA=148
-meterData_VAphB__VA=116
-meterData_VAphC__VA=144
-meterData_W__W=-258
-meterData_WphA__W=-135
-meterData_WphB__W=-28
-meterData_WphC__W=-94
-variablesMeter='meterData_A__A meterData_AphA__A meterData_AphB__A meterData_AphC__A meterData_Evt meterData_Hz__Hz meterData_ID meterData_L meterData_PF__perct meterData_PFphA__perct meterData_PFphB__perct meterData_PFphC__perct meterData_PPV__V meterData_PVphC__V meterData_PhV__V meterData_PhVphAB__V meterData_PhVphA__V meterData_PhVphBC__V meterData_PhVphB__V meterData_PhVphCA__V meterData_TotWhExpPhA__kWh meterData_TotWhExpPhB__kWh meterData_TotWhExpPnC__kWh meterData_TotWhExp__kWh meterData_TotWhImpPhA__kWh meterData_TotWhImpPhB__kWh meterData_TotWhImpPnC__kWh meterData_TotWhImp__kWh meterData_VAR__var meterData_VARphA__var meterData_VARphB__var meterData_VARphC__var meterData_VA__VA meterData_VAphA__VA meterData_VAphB__VA meterData_VAphC__VA meterData_W__W meterData_WphA__W meterData_WphB__W meterData_WphC__W'
+meterData_Hz__Hz=50.02
+meterData_PF__perct=41.93
+meterData_PhV__V=235.09
+meterData_TotWhExp__kWh=86.270
+meterData_TotWhImp__kWh=138.174
+meterData_VA__VA=441
+meterData_W__W=-220
+variables='inverterData_A__A inverterData_DCA__A inverterData_DCV__V inverterData_DCW__W inverterData_Evt1 inverterData_Hz__Hz inverterData_PPVphA__V inverterData_St inverterData_StVnd inverterData_TmpSnk__C inverterData_WH__kWh inverterData_W__W meterData_A__A meterData_Evt meterData_Hz__Hz meterData_PF__perct meterData_PhV__V meterData_TotWhExp__kWh meterData_TotWhImp__kWh meterData_VA__VA meterData_W__W'
 ```
 Usage in SH-scripts with:
 ```SH
 eval $(bin/modbus_SE_reader.tcl target 502 Meter SH)
 ```
 #### Performance
-Tcl is fast enough also on the old CCU2, the reader_lib also reads a data block in one request, this way it is not a real difference whether you want one or ten values. Getting data from inverter and meter take a second request & parse. But at all, it more than good enough IMHO.  
+Tcl is fast enough also on the old CCU2. The reader_lib also reads a data block in one request, this way it is not a big difference whether you want one or ten values. Getting data from inverter and meter take a second request & parse. But at all, it more than good enough IMHO.  
 Sample of time `bin/modbus_SE_reader.tcl target 502 MeterFull HUMAN`:  
 real    0m 0.27s  
 user    0m 0.20s  
 sys     0m 0.07s  
-Using Meter / Inverter instead of MeterFull / InverterFull also reduces load if you don't need special values (due to the dynamic design, it's not a problem to add or remove specific values in the reading-section (switch), output changes w/o adaption).
+Because the script allows to read multiple blocks at once the initial effort to start the Tcl-environment from WebUI etc. is reduced. Using Meter / Inverter instead of MeterFull / InverterFull also reduces load a bit if you don't need special values (due to the dynamic design, it's not a problem to add or remove specific values in the reading-section (switch), output changes w/o adaption).
 
 ### Contributions
 * Thanks to Indi55 from homematic-forum.de for the [script to read from ModBus TCP](https://homematic-forum.de/forum/viewtopic.php?f=31&t=55722&p=553720). Please note his cudos to "Andrey-Nakin".
@@ -235,6 +222,6 @@ I read some posts stating that you should not wait to long for the first connect
 #### Other SunSpec / SE-Monitoring Solutions
 * [SunSpec-Monitor, Perl-based](https://github.com/tjko/sunspec-monitor)
 
-### Tcl Reference
+### Tcl Reference (just for the author's first steps in Tcl...)
 * [Tcl Reference Manual](http://tmml.sourceforge.net/doc/tcl/index.html)
 * [Tcl/Tk Tutorial](https://www.tutorialspoint.com/tcl-tk/index.htm)

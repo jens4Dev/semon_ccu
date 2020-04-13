@@ -5,13 +5,9 @@
 ! IP/hostname & Port separated by blank
 string ipPortSolarEdge = "target 502";
 
-dom.GetObject("CUxD.CUX2801001:6.CMD_SETS").State("tclsh /usr/local/addons/semon_ccu/bin/modbus_SE_reader.tcl " # ipPortSolarEdge # " Inverter HMSCRIPT");
+dom.GetObject("CUxD.CUX2801001:6.CMD_SETS").State("tclsh /usr/local/addons/semon_ccu/bin/modbus_SE_reader.tcl " # ipPortSolarEdge # " Inverter Meter HMSCRIPT");
 dom.GetObject("CUxD.CUX2801001:6.CMD_QUERY_RET").State(1);
-var datenInverter = dom.GetObject("CUxD.CUX2801001:6.CMD_RETS").State();
-
-dom.GetObject("CUxD.CUX2801001:6.CMD_SETS").State("tclsh /usr/local/addons/semon_ccu/bin/modbus_SE_reader.tcl " # ipPortSolarEdge # " Meter HMSCRIPT");
-dom.GetObject("CUxD.CUX2801001:6.CMD_QUERY_RET").State(1);
-var datenMeter = dom.GetObject("CUxD.CUX2801001:6.CMD_RETS").State();
+var daten = dom.GetObject("CUxD.CUX2801001:6.CMD_RETS").State();
 
 integer einspeisung;
 integer verbrauch;
@@ -21,7 +17,7 @@ string temp;
 string state;
 
 string tuple;
-foreach(tuple, datenInverter.Split("|")) 
+foreach(tuple, daten.Split("|")) 
 {
    string item = tuple.StrValueByIndex("=", 0);
    string value = tuple.StrValueByIndex("=", 1);
@@ -37,11 +33,6 @@ foreach(tuple, datenInverter.Split("|"))
    if (item == "inverterData_TmpSnk__C") {
       temp = tuple.StrValueByIndex("=", 1);
    }
-}
-
-foreach(tuple, datenMeter.Split("|")) 
-{
-   string item = tuple.StrValueByIndex("=", 0);
    if (item == "meterData_W__W") {
       integer value = tuple.StrValueByIndex("=", 1).ToInteger();
       ! Messwert ist negativ bei Strombezug aus dem Netz - positiv bei Einspeisung

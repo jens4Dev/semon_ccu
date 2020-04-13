@@ -8,7 +8,7 @@ if { $argc < 4 } {
   puts "(IP, Port, Function (Data-Block) and output-type for reading SolarEdge Inverter and Wattnode Meter."
   puts "For example: 192.168.178.35 502 Inverter SH"
   puts " "
-  puts "Output comes in a parseable form for different languages - JSON or SH ((bash-)shell)  "
+  puts "Output comes in a parseable form for different languages - JSON, HMSCRIPT or SH ((bash-)shell)  "
   puts "IP/FQDN DNS-hostname or IP-adress of SolarEdge Inverter"
   puts "Port 	client port for ModBus TCP"
   puts "Func 	CommonInv    - read Inverter common block"

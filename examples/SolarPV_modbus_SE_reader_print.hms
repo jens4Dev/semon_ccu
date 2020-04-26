@@ -1,6 +1,6 @@
 ! SolarPV_modbus_SE_reader.hms - PV-Werte auslesen
 !
-! (c) jensDev
+! (c) jensDev - license LGPL3
 
 ! IP/hostname & Port separated by blank
 string ipPortSolarEdge = "target 502";

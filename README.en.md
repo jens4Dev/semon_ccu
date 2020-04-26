@@ -1,5 +1,5 @@
 ## eq3 / HomeMatic CCU based data logging for SolarEdge Inverters with ModBus Meter
-[![License](http://img.shields.io/:license-lgpl3-blue.svg?style=flat)](http://www.gnu.org/licenses/lgpl-3.0.html)
+[![License](http://img.shields.io/:license-lgpl3-blue.svg?style=flat)](http://www.gnu.org/licenses/lgpl-3.0.html) - except modbus.tcl (MIT)
 
 This software was developed for our private PV-device using a SolarEdge SE5K inverter in combination a with ModBus-based meter WattNode SE-WND-3Y-400-MB. 
 Meter and inverter are talking via a separate RS485-bus while the inverter is also connected to the LAN. Its ModBus TCP protocol allows you to read lots of parameters from both the inverter as well as the meter (for [activation of ModBus TCP see below](#Activation-of-ModBus-TCP)).
@@ -7,11 +7,16 @@ SolarEdge implements (more or less) the SunSpec-Specification for this data - se
 
 Features:
 * Reads measurements and command data from inverter and meter
-* Flexible: reads data & deliver data for multiple blocks in one call
-* Multi-purpose: Interfaces to different use cases like Shell-scripts, HomeMatic Script (HMScript), JSON or just human readable
-* Reads full or reduced data blocks
-* Open for extension, e.g. list of output variables is easily extendable (no fixed list of variables as far as possible) 
 * Low CPU-footprint (especially for CCU2..)
+* Flexible: 
+   * reads data & deliver data for multiple blocks in one call
+   * Multi-purpose: Interfaces to different use cases like Shell-scripts, HomeMatic Script (HMScript), JSON or just human readable
+   * Reads full or reduced data blocks
+* Design as far as possible open for simple extensions
+    * e.g. the list of output variables is easily extendable (there is - as far as possible - no fixed list of variables) 
+    * Structure as library
+
+*Note*: for integration into the CCU there is (currently) no simple installation - the scripts are not packed together as an addon for installation via the WebUI. So you have to bring them to the CCU yourself e.g. via SSH / SCP. And the integration into WebUI programs and the creation of suitable system variables must be done according to your own needs - but there are some scripts from our installation as templates under examples. 
 
 ### Meter and Inverter Communication
 ```

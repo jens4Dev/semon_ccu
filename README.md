@@ -1,18 +1,24 @@
 ## eq3 / HomeMatic CCU-basierte Datenprotokollierung für SolarEdge-Wechselrichter mit ModBus-Zähler
-[![License](http://img.shields.io/:license-lgpl3-blue.svg?style=flat)](http://www.gnu.org/licenses/lgpl-3.0.html)
+[![License](http://img.shields.io/:license-lgpl3-blue.svg?style=flat)](http://www.gnu.org/licenses/lgpl-3.0.html) - außer modbus.tcl (MIT)
+
 [english README.md](README.en.md)
 
-Diese Software wurde für unser privates PV-System mit einem SolarEdge SE5K-Wechselrichter in Kombination mit einem ModBus-basierten Zähler WattNode SE-WND-3Y-400-MB entwickelt. 
-Zähler und Wechselrichter kommunizieren über einen separaten RS485-Bus, während der Wechselrichter zusätzlich mit dem LAN verbunden ist. Damit können über das ModBus-TCP-Protokoll viele Parameter sowohl vom Wechselrichter als auch vom Zähler ausgelesen werden (zur [Aktivierung von ModBus-TCP siehe unten](#Aktivierung-von-ModBus-TCP)).
+Diese Software ist für unser privates PV-System mit einem SolarEdge SE5K-Wechselrichter in Kombination mit einem ModBus-basierten Zähler WattNode SE-WND-3Y-400-MB entwickelt. 
+Zähler und Wechselrichter kommunizieren dabei über einen separaten RS485-Bus, während der Wechselrichter zusätzlich mit dem LAN verbunden ist. Damit können über das ModBus-TCP-Protokoll viele Parameter sowohl vom Wechselrichter als auch vom Zähler ausgelesen werden (zur [Aktivierung von ModBus-TCP siehe unten](#Aktivierung-von-ModBus-TCP)).
 SolarEdge implementiert (mehr oder weniger) die SunSpec-Spezifikation für diese Daten - siehe den Abschnitt [Links](#Links) unten.
 
 Merkmale:
-* Liest Mess- und Basisdaten vom Wechselrichter und Zähler
-* Flexibel: liest und liefert Daten für mehrere Blöcke in einem Aufruf
-* Verschiedene Nutzungsmöglichkeiten in Shell-Skripten, HomeMatic Script (HMScript), JSON oder einfach formatiert "Menschen-lesbar"
-* Liest komplette oder reduzierte Datenblöcke
-* Offen für Erweiterungen, z.B. ist die Liste der Ausgabevariablen leicht erweiterbar (es gibt - soweit eben möglich - keine feste Liste von Variablen) 
+* Liest Mess- und Basisdaten von Wechselrichter und Zähler
 * Niedriger CPU-Bedarf (insbesondere für CCU2..)
+* Flexibel:
+   * liest und liefert Daten für mehrere Blöcke in einem Skript-Aufruf
+   * verschiedene Nutzungsmöglichkeiten in Shell-Skripten, HomeMatic Script (HMScript), JSON oder einfach formatiert "Menschen-lesbar"
+   * Liest komplette oder reduzierte Datenblöcke
+* Design soweit möglich offen für einfache Erweiterungen
+    * z.B. ist die Liste der Ausgabevariablen leicht erweiterbar (es gibt - soweit eben möglich - keine feste Liste von Variablen) 
+    * Aufbau als Library
+
+*Hinweis*: zur Einbindung in die CCU gibt es (aktuell) keine simple Installation - die Skripte sind nicht als Addon zur Installation über die WebUI zusammengepackt. Auf die CCU muss man sie also selber z.B. per SSH / SCP bringen. Und die Einbindung in WebUI-Programme und Anlage von passenden Systemvariablen muss dem eigenen Bedarf nach gemacht werden - es gibt aber unter examples als Vorlage Skripte unserer Installation.  
 
 ### Zähler- und Wechselrichter-Kommunikation
 ```

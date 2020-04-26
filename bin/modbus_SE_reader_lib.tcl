@@ -2,6 +2,10 @@
 #\
 exec tclsh "$0" ${1+"$@"}
 
+# 
+# (c) jensDev - license LGPL3
+#
+
 # library to read values from SolarEdge Inverter & Meter via ModBus TCP
 
 # data cache

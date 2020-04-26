@@ -2,6 +2,10 @@
 #\
 exec tclsh "$0" ${1+"$@"}
 
+# 
+# (c) jensDev - license LGPL3
+#
+
 if { $argc < 4 } {
   puts ""
   puts "The modbus_SE_reader.tcl script requires at least 4 parameters to be given."

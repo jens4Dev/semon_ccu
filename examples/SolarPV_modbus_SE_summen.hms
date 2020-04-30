@@ -15,19 +15,25 @@ foreach(tuple, daten.Split("|"))
    string item = tuple.StrValueByIndex("=", 0);
    string value = tuple.StrValueByIndex("=", 1);
    if (item == "meterData_TotWhExp__kWh") {
-      real totalExport = value;
+      real totalExport = value.ToFloat();
    }
    if (item == "meterData_TotWhImp__kWh") {
-      real totalImport = value;
+      real totalImport = value.ToFloat();
    }
    if (item == "inverterData_WH__kWh") {
-      real totalProduction = value;
+      real totalProduction = value.ToFloat();
    }   
 }
 
-real exportPre = (dom.GetObject(ID_SYSTEM_VARIABLES)).Get("SolarPV.SV_Einspeisung_Tag").Value();
-real importPre = (dom.GetObject(ID_SYSTEM_VARIABLES)).Get("SolarPV.SV_Verbrauch_Tag").Value();
-real productionPre = (dom.GetObject(ID_SYSTEM_VARIABLES)).Get("SolarPV.SV_WR_Produktion_Tag").Value();
+string exportPreAll = (dom.GetObject(ID_SYSTEM_VARIABLES)).Get("SolarPV.SV_Einspeisung_Tag").Value();
+string importPreAll = (dom.GetObject(ID_SYSTEM_VARIABLES)).Get("SolarPV.SV_Verbrauch_Tag").Value();
+string productionPreAll = (dom.GetObject(ID_SYSTEM_VARIABLES)).Get("SolarPV.SV_WR_Produktion_Tag").Value();
+real exportPre = exportPreAll.Split("(").Split(")").StrValueByIndex("\t",1).ToFloat();
+real importPre = importPreAll.Split("(").Split(")").StrValueByIndex("\t",1).ToFloat();
+real productionPre = productionPreAll.Split("(").Split(")").StrValueByIndex("\t",1).ToFloat();
+!WriteLine("Einspeisung gesamt gestern: " # exportPre # " kWh");
+!WriteLine("Verbrauch gesamt gestern: " # importPre # " kWh");
+!WriteLine("PV-Erzeugung gesamt gestern: " # productionPre # " kWh");
 
 real einspeisung = totalExport - exportPre;
 real verbrauch = totalImport - importPre;
@@ -35,9 +41,9 @@ real pvLeistung = totalProduction - productionPre;
 !WriteLine("Einspeisung heute: " # einspeisung # " kWh");
 !WriteLine("Verbrauch heute: " # verbrauch # " kWh");
 !WriteLine("PV-Erzeugung heute: " # pvLeistung # " kWh");
-(dom.GetObject(ID_SYSTEM_VARIABLES)).Get("SolarPV.SV_Einspeisung_Tag").State(einspeisung); 
-(dom.GetObject(ID_SYSTEM_VARIABLES)).Get("SolarPV.SV_Verbrauch_Tag").State(verbrauch); 
-(dom.GetObject(ID_SYSTEM_VARIABLES)).Get("SolarPV.SV_WR_Produktion_Tag").State(pvLeistung); 
+(dom.GetObject(ID_SYSTEM_VARIABLES)).Get("SolarPV.SV_Einspeisung_Tag").State(einspeisung # " (" # totalExport # ")"); 
+(dom.GetObject(ID_SYSTEM_VARIABLES)).Get("SolarPV.SV_Verbrauch_Tag").State(verbrauch # " (" # totalImport # ")"); 
+(dom.GetObject(ID_SYSTEM_VARIABLES)).Get("SolarPV.SV_WR_Produktion_Tag").State(pvLeistung # " (" # totalProduction # ")"); 
 ! Loggen für CUxD-Highcharts
 (dom.GetObject("CUxD.CUX2801001:1.LOGIT")).State("SolarPV_Einspeisung_Tag;"#einspeisung);
 (dom.GetObject("CUxD.CUX2801001:1.LOGIT")).State("SolarPV_Verbrauch_Tag;"#verbrauch);

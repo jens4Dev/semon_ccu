@@ -52,7 +52,7 @@ if { $argc < 4 } {
 # Include lib - must in same dir as this script
 set script_path [ file dirname [ info script ] ]
 source $script_path/modbus.tcl
-source $script_path/modbus_SE_reader_lib.tcl
+source $script_path/modbus_SE_lib.tcl
 
 # Set configuration
 ::modbus::configure -mode "TCP" -ip "[lindex $argv 0]" -port "[lindex $argv 1]"
@@ -314,7 +314,7 @@ switch -- $outputFormat {
         set varList [ lsort [ array names ::SE_modBus::dataArray ] ]
         set varCnt [ llength $varList ]
 
-        puts "values={"
+        puts "\{ \"values\" : {"
         for {set ii 0} {$ii < $varCnt} {incr ii} {
             set item [ lindex $varList $ii ]
             set val $::SE_modBus::dataArray($item)
@@ -327,8 +327,8 @@ switch -- $outputFormat {
                 puts ","
             }
         }
-        puts "}"
-        puts -nonewline "members=\["
+        puts "}, "
+        puts -nonewline "\"members\" : \["
         for {set ii 0} {$ii < $varCnt} {incr ii} {
             set item [ lindex $varList $ii ]
             if { $ii < [ expr $varCnt - 1]} {
@@ -337,7 +337,7 @@ switch -- $outputFormat {
                 puts -nonewline "\"$item\""
             }
         }
-        puts "]"
+        puts "] \}"
     }
     "HMSCRIPT" {
         foreach item [ lsort [ array names ::SE_modBus::dataArray ] ] {

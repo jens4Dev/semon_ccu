@@ -26,7 +26,7 @@ foreach(tuple, daten.Split("|"))
 }
 
 string exportPreAll = (dom.GetObject(ID_SYSTEM_VARIABLES)).Get("SolarPV.SV_Einspeisung_Tag").Value();
-string importPreAll = (dom.GetObject(ID_SYSTEM_VARIABLES)).Get("SolarPV.SV_Verbrauch_Tag").Value();
+string importPreAll = (dom.GetObject(ID_SYSTEM_VARIABLES)).Get("SolarPV.SV_Bezug_Tag").Value();
 string productionPreAll = (dom.GetObject(ID_SYSTEM_VARIABLES)).Get("SolarPV.SV_WR_Produktion_Tag").Value();
 real exportPre = exportPreAll.Split("(").Split(")").StrValueByIndex("\t",1).ToFloat();
 real importPre = importPreAll.Split("(").Split(")").StrValueByIndex("\t",1).ToFloat();
@@ -36,18 +36,18 @@ real productionPre = productionPreAll.Split("(").Split(")").StrValueByIndex("\t"
 !WriteLine("PV-Erzeugung gesamt gestern: " # productionPre # " kWh");
 
 real einspeisung = totalExport - exportPre;
-real verbrauch = totalImport - importPre;
+real bezug = totalImport - importPre;
 real pvLeistung = totalProduction - productionPre;
 !WriteLine("Einspeisung heute: " # einspeisung # " kWh");
-!WriteLine("Verbrauch heute: " # verbrauch # " kWh");
+!WriteLine("Bezug heute: " # bezug # " kWh");
 !WriteLine("PV-Erzeugung heute: " # pvLeistung # " kWh");
 (dom.GetObject(ID_SYSTEM_VARIABLES)).Get("SolarPV.SV_Einspeisung_Tag").State(einspeisung # " (" # totalExport # ")"); 
-(dom.GetObject(ID_SYSTEM_VARIABLES)).Get("SolarPV.SV_Verbrauch_Tag").State(verbrauch # " (" # totalImport # ")"); 
+(dom.GetObject(ID_SYSTEM_VARIABLES)).Get("SolarPV.SV_Bezug_Tag").State(bezug # " (" # totalImport # ")"); 
 (dom.GetObject(ID_SYSTEM_VARIABLES)).Get("SolarPV.SV_WR_Produktion_Tag").State(pvLeistung # " (" # totalProduction # ")"); 
 ! Loggen für CUxD-Highcharts
 (dom.GetObject("CUxD.CUX2801001:1.LOGIT")).State("SolarPV_Einspeisung_Tag;"#einspeisung);
-(dom.GetObject("CUxD.CUX2801001:1.LOGIT")).State("SolarPV_Verbrauch_Tag;"#verbrauch);
+(dom.GetObject("CUxD.CUX2801001:1.LOGIT")).State("SolarPV_Bezug_Tag;"#bezug);
 (dom.GetObject("CUxD.CUX2801001:1.LOGIT")).State("SolarPV_WR_Produktion_Tag;"#pvLeistung);
 (dom.GetObject("CUxD.CUX2801001:1.LOGIT")).State("SolarPV_Einspeisung_Total;"#totalExport);
-(dom.GetObject("CUxD.CUX2801001:1.LOGIT")).State("SolarPV_Verbrauch_Total;"#totalImport);
+(dom.GetObject("CUxD.CUX2801001:1.LOGIT")).State("SolarPV_Bezug_Total;"#totalImport);
 (dom.GetObject("CUxD.CUX2801001:1.LOGIT")).State("SolarPV_WR_Produktion_Total;"#totalProduction);
